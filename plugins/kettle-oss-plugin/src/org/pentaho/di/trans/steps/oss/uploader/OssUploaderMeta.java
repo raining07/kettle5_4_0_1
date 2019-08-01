@@ -20,6 +20,7 @@ import org.pentaho.metastore.api.IMetaStore;
 import org.w3c.dom.Node;
 
 /**
+ * StepMeta
  * 
  * @author xuejian
  *
@@ -31,6 +32,13 @@ public class OssUploaderMeta extends BaseStepMeta implements StepMetaInterface {
 	 * XML tags
 	 */
 	private final String TAG_ENDPOINT = "endpoint";
+	private final String TAG_ACCESS_KEY = "access_key";
+	private final String TAG_SECURE_KEY = "secure_key";
+	private final String TAG_BUCKET = "bucket";
+	private final String TAG_TARGET_FILE_NAME = "target_file_name";
+	private final String TAG_SOURCE_FILE_PATH = "source_file_path";
+	private final String TAG_SOURCE_FILE_NAME = "source_file_name";
+	private final String TAG_COVER_FILE = "cover_file";
 
 	/*
 	 * Form fields
@@ -39,6 +47,10 @@ public class OssUploaderMeta extends BaseStepMeta implements StepMetaInterface {
 	private String accessKey;
 	private String secureKey;
 	private String bucket;
+	private String targetFileName;
+	private String sourceFilePath;
+	private String sourceFileName;
+	private boolean coverFile;
 
 	public String getEndpoint() {
 		return endpoint;
@@ -72,6 +84,38 @@ public class OssUploaderMeta extends BaseStepMeta implements StepMetaInterface {
 		this.bucket = bucket;
 	}
 
+	public String getTargetFileName() {
+		return targetFileName;
+	}
+
+	public void setTargetFileName(String targetFileName) {
+		this.targetFileName = targetFileName;
+	}
+
+	public String getSourceFilePath() {
+		return sourceFilePath;
+	}
+
+	public void setSourceFilePath(String sourceFilePath) {
+		this.sourceFilePath = sourceFilePath;
+	}
+
+	public String getSourceFileName() {
+		return sourceFileName;
+	}
+
+	public void setSourceFileName(String sourceFileName) {
+		this.sourceFileName = sourceFileName;
+	}
+
+	public boolean isCoverFile() {
+		return coverFile;
+	}
+
+	public void setCoverFile(boolean coverFile) {
+		this.coverFile = coverFile;
+	}
+
 	public OssUploaderMeta() {
 		super();
 		// TODO Auto-generated constructor stub
@@ -83,19 +127,24 @@ public class OssUploaderMeta extends BaseStepMeta implements StepMetaInterface {
 		accessKey = "";
 		secureKey = "";
 		bucket = "";
+		targetFileName = "";
+		sourceFilePath = "";
+		sourceFileName = "";
+		coverFile = true;
 	}
 
+	/**
+	 * 提供getStep方法是为执行org.pentaho.di.trans.Trans.prepareExecution可以获取step
+	 */
 	@Override
 	public StepInterface getStep(StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr,
 			TransMeta transMeta, Trans trans) {
-		// TODO Auto-generated method stub
-		return null;
+		return new OssUploader(stepMeta, stepDataInterface, copyNr, transMeta, trans);
 	}
 
 	@Override
 	public StepDataInterface getStepData() {
-		// TODO Auto-generated method stub
-		return null;
+		return new OssUploaderData();
 	}
 
 	/**
@@ -113,6 +162,13 @@ public class OssUploaderMeta extends BaseStepMeta implements StepMetaInterface {
 	private void readData(Node stepnode, IMetaStore metaStore) throws KettleXMLException {
 		try {
 			endpoint = XMLHandler.getTagValue(stepnode, TAG_ENDPOINT);
+			accessKey = XMLHandler.getTagValue(stepnode, TAG_ACCESS_KEY);
+			secureKey = XMLHandler.getTagValue(stepnode, TAG_SECURE_KEY);
+			bucket = XMLHandler.getTagValue(stepnode, TAG_BUCKET);
+			targetFileName = XMLHandler.getTagValue(stepnode, TAG_TARGET_FILE_NAME);
+			sourceFilePath = XMLHandler.getTagValue(stepnode, TAG_SOURCE_FILE_PATH);
+			sourceFileName = XMLHandler.getTagValue(stepnode, TAG_SOURCE_FILE_NAME);
+			coverFile = "Y".equalsIgnoreCase(XMLHandler.getTagValue(stepnode, TAG_COVER_FILE));
 		} catch (Exception e) {
 			throw new KettleXMLException("Unable to load step info from XML", e);
 		}
@@ -122,6 +178,13 @@ public class OssUploaderMeta extends BaseStepMeta implements StepMetaInterface {
 	public String getXML() throws KettleException {
 		StringBuffer retval = new StringBuffer();
 		retval.append("    ").append(XMLHandler.addTagValue(TAG_ENDPOINT, endpoint));
+		retval.append("    ").append(XMLHandler.addTagValue(TAG_ACCESS_KEY, accessKey));
+		retval.append("    ").append(XMLHandler.addTagValue(TAG_SECURE_KEY, secureKey));
+		retval.append("    ").append(XMLHandler.addTagValue(TAG_BUCKET, bucket));
+		retval.append("    ").append(XMLHandler.addTagValue(TAG_TARGET_FILE_NAME, targetFileName));
+		retval.append("    ").append(XMLHandler.addTagValue(TAG_SOURCE_FILE_PATH, sourceFilePath));
+		retval.append("    ").append(XMLHandler.addTagValue(TAG_SOURCE_FILE_NAME, sourceFileName));
+		retval.append("    ").append(XMLHandler.addTagValue(TAG_COVER_FILE, coverFile));
 		return retval.toString();
 	}
 
@@ -134,6 +197,13 @@ public class OssUploaderMeta extends BaseStepMeta implements StepMetaInterface {
 			throws KettleException {
 		try {
 			endpoint = rep.getStepAttributeString(id_step, TAG_ENDPOINT);
+			accessKey = rep.getStepAttributeString(id_step, TAG_ACCESS_KEY);
+			secureKey = rep.getStepAttributeString(id_step, TAG_SECURE_KEY);
+			bucket = rep.getStepAttributeString(id_step, TAG_BUCKET);
+			targetFileName = rep.getStepAttributeString(id_step, TAG_TARGET_FILE_NAME);
+			sourceFilePath = rep.getStepAttributeString(id_step, TAG_SOURCE_FILE_PATH);
+			sourceFileName = rep.getStepAttributeString(id_step, TAG_SOURCE_FILE_NAME);
+			coverFile = rep.getStepAttributeBoolean(id_step, TAG_COVER_FILE);
 		} catch (Exception e) {
 			throw new KettleException("Unexpected error reading step information from the repository", e);
 		}
@@ -147,6 +217,13 @@ public class OssUploaderMeta extends BaseStepMeta implements StepMetaInterface {
 			throws KettleException {
 		try {
 			rep.saveStepAttribute(id_transformation, id_step, TAG_ENDPOINT, endpoint);
+			rep.saveStepAttribute(id_transformation, id_step, TAG_ACCESS_KEY, accessKey);
+			rep.saveStepAttribute(id_transformation, id_step, TAG_SECURE_KEY, secureKey);
+			rep.saveStepAttribute(id_transformation, id_step, TAG_BUCKET, bucket);
+			rep.saveStepAttribute(id_transformation, id_step, TAG_TARGET_FILE_NAME, targetFileName);
+			rep.saveStepAttribute(id_transformation, id_step, TAG_SOURCE_FILE_PATH, sourceFilePath);
+			rep.saveStepAttribute(id_transformation, id_step, TAG_SOURCE_FILE_NAME, sourceFileName);
+			rep.saveStepAttribute(id_transformation, id_step, TAG_COVER_FILE, coverFile);
 		} catch (Exception e) {
 			throw new KettleException("Unable to save step information to the repository for id_step=" + id_step, e);
 		}
