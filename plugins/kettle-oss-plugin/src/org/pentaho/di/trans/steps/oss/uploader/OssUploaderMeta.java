@@ -25,7 +25,7 @@ import org.w3c.dom.Node;
  * @author xuejian
  *
  */
-@Step(id = "OssUploader", image = "oss-uploader.png", i18nPackageName = "org.pentaho.di.trans.steps.oss.uploader", name = "OssUploader.Name", description = "OssUploader.TooltipDesc", categoryDescription = "i18n:org.pentaho.di.trans.step:BaseStep.Category.Output")
+@Step(id = "OssUploader", image = "oss-uploader.png", i18nPackageName = "org.pentaho.di.trans.steps.oss.uploader", name = "OssUploader.Name", description = "OssUploader.TooltipDesc", categoryDescription = "i18n:org.pentaho.di.trans.steps.oss.uploader:OssUploader.Step.Category")
 public class OssUploaderMeta extends BaseStepMeta implements StepMetaInterface {
 
 	/*
