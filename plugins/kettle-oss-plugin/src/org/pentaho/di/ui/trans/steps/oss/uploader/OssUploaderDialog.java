@@ -101,6 +101,8 @@ public class OssUploaderDialog extends BaseStepDialog implements StepDialogInter
 	private CCombo wSourceFileName;
 	private FormData fdlSourceFileName;
 
+	private boolean getpreviousFields = false;
+
 	public OssUploaderDialog(Shell parent, Object in, TransMeta transMeta, String sname) {
 		super(parent, (BaseStepMeta) in, transMeta, sname);
 		input = (OssUploaderMeta) in;
@@ -384,6 +386,10 @@ public class OssUploaderDialog extends BaseStepDialog implements StepDialogInter
 	}
 
 	protected void getPreviousFields() {
+		if (getpreviousFields) {
+			return;
+		}
+		getpreviousFields = true;
 		try {
 			// File path ...
 			String sourceFilePath = null;
@@ -413,8 +419,8 @@ public class OssUploaderDialog extends BaseStepDialog implements StepDialogInter
 				wSourceFileName.setText(siurceFileName);
 			}
 		} catch (KettleException ke) {
-			new ErrorDialog(shell, BaseMessages.getString(PKG, "MailDialog.FailedToGetFields.DialogTitle"),
-					BaseMessages.getString(PKG, "MailDialog.FailedToGetFields.DialogMessage"), ke);
+			new ErrorDialog(shell, BaseMessages.getString(PKG, "OssUploaderDialog.FailedToGetFields.DialogTitle"),
+					BaseMessages.getString(PKG, "OssUploaderDialog.FailedToGetFields.DialogMessage"), ke);
 		}
 	}
 
