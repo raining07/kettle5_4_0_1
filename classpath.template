@@ -14,6 +14,7 @@
   <classpathentry kind="src" path="plugins/kettle-openerp-plugin/src"/>
   <classpathentry kind="src" path="plugins/market/src"/>
   <classpathentry kind="src" path="plugins/star-modeler/src"/>
+  <classpathentry kind="src" path="plugins/kettle-oss-plugin/src"/>
   <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
   <classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Kettle extra"/>
   <classpathentry kind="output" path="eclipse-bin"/>
