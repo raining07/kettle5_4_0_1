@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/kettle5_4_0_1/ui/src/org/pentaho/di/ui/spoon/Spoon.java"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="1"/>
+</listAttribute>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.pentaho.di.ui.spoon.Spoon"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="kettle5_4_0_1"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-DKETTLE_PLUGIN_CLASSES=org.pentaho.di.trans.steps.oss.uploader.OssUploaderMeta"/>
+<stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:kettle5_4_0_1/assembly/package-res}"/>
+</launchConfiguration>

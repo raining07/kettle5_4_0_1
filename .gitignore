@@ -18,8 +18,6 @@ projects/
 build-res/dojo-*
 build-res/module-scripts/
 *.class
-*.jar
 *.war
 *.ear
 *.iml
-/*.launch
