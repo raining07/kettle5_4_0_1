@@ -61,6 +61,9 @@ public class OssWorker implements Closeable {
 		ossClient.putObject(bucket, targetFileName, input);
 	}
 
+	public void doDownload(String bucket, String remoteFileName, String localPath, String localFileName) {
+	}
+
 	@Override
 	public void close() throws IOException {
 		ossClient.shutdown();
