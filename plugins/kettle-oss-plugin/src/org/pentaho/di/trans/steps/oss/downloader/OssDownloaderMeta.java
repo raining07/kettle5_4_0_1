@@ -25,7 +25,8 @@ import org.w3c.dom.Node;
  * @author xuejian
  *
  */
-@Step(id = "OssDownloader", image = "oss-downloader.png", i18nPackageName = "org.pentaho.di.trans.steps.oss.downloader", name = "OssDownloader.Name", description = "OssDownloader.TooltipDesc", categoryDescription = "i18n:org.pentaho.di.trans.steps.oss.downloader:OssDownloader.Step.Category")
+// 暂未开发
+// @Step(id = "OssDownloader", image = "oss-downloader.png", i18nPackageName = "org.pentaho.di.trans.steps.oss.downloader", name = "OssDownloader.Name", description = "OssDownloader.TooltipDesc", categoryDescription = "i18n:org.pentaho.di.trans.steps.oss.downloader:OssDownloader.Step.Category")
 public class OssDownloaderMeta extends BaseStepMeta implements StepMetaInterface {
 
 	/*
