@@ -8,6 +8,6 @@
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.pentaho.di.ui.spoon.Spoon"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="kettle5_4_0_1"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-DKETTLE_PLUGIN_CLASSES=org.pentaho.di.trans.steps.oss.uploader.OssUploaderMeta,org.pentaho.di.trans.steps.oss.downloader.OssDownloaderMeta"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-DKETTLE_PLUGIN_CLASSES=org.pentaho.di.trans.steps.oss.uploader.OssUploaderMeta,org.pentaho.di.trans.steps.oss.downloader.OssDownloaderMeta,org.pentaho.di.trans.steps.oss.fileinput.OssFileInputMeta"/>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:kettle5_4_0_1/assembly/package-res}"/>
 </launchConfiguration>
