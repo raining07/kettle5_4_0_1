@@ -4,11 +4,14 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import com.aliyun.oss.OSSClient;
+import com.aliyun.oss.model.ListObjectsRequest;
+import com.aliyun.oss.model.OSSObjectSummary;
 import com.aliyun.oss.model.ObjectMetadata;
+import com.google.common.collect.Lists;
 
 /**
  * OSS Client高程度封装工具
@@ -19,6 +22,7 @@ import com.aliyun.oss.model.ObjectMetadata;
 public class OssWorker implements Closeable {
 	private OssConfig config;
 	private OSSClient ossClient;
+	private InputStream in;
 
 	public OssWorker(OssConfig config) {
 		super();
@@ -39,10 +43,10 @@ public class OssWorker implements Closeable {
 	 * @param targetFileName     目标文件名
 	 * @throws FileNotFoundException
 	 */
-	public void doUpload(String bucket, boolean coverMode, String sourceFileFullPath, String targetFileName)
+	public void doUpload(boolean coverMode, String sourceFileFullPath, String targetFileName)
 			throws FileNotFoundException {
 		if (!coverMode) {
-			if (ossClient.doesObjectExist(bucket, targetFileName)) {
+			if (ossClient.doesObjectExist(this.config.getBucket(), targetFileName)) {
 				int splitPostion = targetFileName.lastIndexOf(".");
 				if (splitPostion <= 0) {
 					splitPostion = targetFileName.length();
@@ -57,17 +61,42 @@ public class OssWorker implements Closeable {
 		objectMeta.setContentLength(file.length());
 		// 可以在metadata中标记文件类型
 		// objectMeta.setContentType("image/jpeg");
-		InputStream input = new FileInputStream(file);
-		ossClient.putObject(bucket, targetFileName, input);
+		in = new FileInputStream(file);
+		ossClient.putObject(this.config.getBucket(), targetFileName, in);
 	}
 
 	public void doDownload(String bucket, String remoteFileName, String localPath, String localFileName) {
 	}
 
+	public List<String> getOssFiles(String fileName, boolean prevFlag) {
+		int filesCount = 1000;
+		ListObjectsRequest listObjectsRequest = new ListObjectsRequest(this.config.getBucket(), fileName, null, null,
+				filesCount);
+		List<OSSObjectSummary> objectSummaries = ossClient.listObjects(listObjectsRequest).getObjectSummaries();
+		List<String> ossFiles = Lists.newArrayList();
+		for (OSSObjectSummary ossObjectSummary : objectSummaries) {
+			ossFiles.add(ossObjectSummary.getKey());
+		}
+		return ossFiles;
+	}
+
 	@Override
-	public void close() throws IOException {
-		ossClient.shutdown();
+	public void close() {
+		try {
+			if (in != null) {
+				in.close();
+			}
+		} catch (Throwable thr) {
+			thr.printStackTrace();
+		}
+		try {
+			ossClient.shutdown();
+		} catch (Throwable thr) {
+			thr.printStackTrace();
+		}
 		ossClient = null;
 		config = null;
+		in = null;
 	}
+
 }

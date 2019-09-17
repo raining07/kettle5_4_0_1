@@ -110,7 +110,7 @@ public class OssUploader extends BaseStep implements StepInterface {
 		try {
 			OssConfig ossConfig = new OssConfig(endpoint, accessKey, secureKey, bucket);
 			ossWorker = new OssWorker(ossConfig);
-			ossWorker.doUpload(bucket, coverFile, sourceFilePath + File.separator + sourceFileName, targetFileName);
+			ossWorker.doUpload(coverFile, sourceFilePath + File.separator + sourceFileName, targetFileName);
 		} catch (Exception e) {
 			throw e;
 		} finally {
