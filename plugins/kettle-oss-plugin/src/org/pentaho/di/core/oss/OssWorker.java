@@ -9,6 +9,7 @@ import java.util.List;
 
 import com.aliyun.oss.OSSClient;
 import com.aliyun.oss.model.ListObjectsRequest;
+import com.aliyun.oss.model.OSSObject;
 import com.aliyun.oss.model.OSSObjectSummary;
 import com.aliyun.oss.model.ObjectMetadata;
 import com.google.common.collect.Lists;
@@ -68,10 +69,9 @@ public class OssWorker implements Closeable {
 	public void doDownload(String bucket, String remoteFileName, String localPath, String localFileName) {
 	}
 
-	public List<String> getOssFiles(String fileName, boolean prevFlag) {
-		int filesCount = 1000;
+	public List<String> getOssFiles(String fileName, boolean prevFlag, int limit) {
 		ListObjectsRequest listObjectsRequest = new ListObjectsRequest(this.config.getBucket(), fileName, null, null,
-				filesCount);
+				limit);
 		List<OSSObjectSummary> objectSummaries = ossClient.listObjects(listObjectsRequest).getObjectSummaries();
 		List<String> ossFiles = Lists.newArrayList();
 		for (OSSObjectSummary ossObjectSummary : objectSummaries) {
@@ -97,6 +97,18 @@ public class OssWorker implements Closeable {
 		ossClient = null;
 		config = null;
 		in = null;
+	}
+
+	public OSSFileObject getOSSFileObject(String fileName) {
+		OSSFileObject ossFileObject = new OSSFileObject();
+		OSSObject ossObject = ossClient.getObject(config.getBucket(), fileName);
+		ossFileObject.setContent(ossObject.getObjectContent());
+		ObjectMetadata objectMetadata = ossObject.getObjectMetadata();
+		ossFileObject.setEncoding(objectMetadata.getContentEncoding());
+		ossFileObject.setContentType(objectMetadata.getContentType());
+		ossFileObject.setContentLength(objectMetadata.getContentLength());
+		ossFileObject.setContentMD5(objectMetadata.getContentMD5());
+		return ossFileObject;
 	}
 
 }

@@ -1,12 +1,10 @@
 package org.pentaho.di.trans.steps.oss.filesinput;
 
-import java.util.List;
-
 import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.oss.BookMark;
 import org.pentaho.di.core.oss.OssConfig;
-import org.pentaho.di.core.oss.OssWorker;
+import org.pentaho.di.core.oss.OssWorkerUtils;
 import org.pentaho.di.core.row.RowMeta;
-import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStep;
@@ -14,7 +12,6 @@ import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
-import org.pentaho.di.trans.steps.textfileinput.TextFileInputField;
 
 /**
  * OSS多文件输入<br/>
@@ -23,7 +20,7 @@ import org.pentaho.di.trans.steps.textfileinput.TextFileInputField;
  * 1.2.Files:oss文件名前缀或者全名<br/>
  * <br/>
  * 2.读文件规则<br/>
- * 2.1.File type:oss文件类型(目前两种：1.CSV/2.Excel)<br/>
+ * 2.1.FileType:oss文件类型(目前两种：1.CSV/2.Excel)<br/>
  * 2.2.Separator:指定分割符<br/>
  * 2.3.Enclosure:文本限定符<br/>
  * 2.4.Format:格式(DOS/UNIX)<br/>
@@ -54,40 +51,23 @@ public class OssFilesInput extends BaseStep implements StepInterface {
 		meta = (OssFilesInputMeta) smi;
 		data = (OssFilesInputData) sdi;
 
-
 		OssConfig ossConfig = null;
 		if (first) { // we just got started
 			first = false;
 
 			meta.getFields(data.outputRowMeta, getStepname(), null, null, this, repository, metaStore);
 
-			
 			// 输出数据
 			data.outputRowMeta = new RowMeta();
 
 			// get oss config
 			ossConfig = new OssConfig(data.endpoint, data.accessKey, data.secureKey, data.bucket);
+			BookMark bookMark = OssWorkerUtils.createBookMark(ossConfig, data.fileName, meta.isPrevFlag(), 1000);
 
-			List<String> fileNames = getFileNames(ossConfig, data.fileName, meta.isPrevFlag());
-			logBasic("读到 [" + fileNames.size() + "] 个文件");
-
+			logBasic("读到 [" + bookMark.getFilenames().size() + "] 个文件");
 		}
 
 		return false;
-	}
-
-	private List<String> getFileNames(OssConfig ossConfig, String fileName, boolean prevFlag) {
-		OssWorker ossWorker = null;
-		try {
-			ossWorker = new OssWorker(ossConfig);
-			return ossWorker.getOssFiles(fileName, prevFlag);
-		} catch (Exception e) {
-			throw e;
-		} finally {
-			if (ossWorker != null) {
-				ossWorker.close();
-			}
-		}
 	}
 
 	@Override
