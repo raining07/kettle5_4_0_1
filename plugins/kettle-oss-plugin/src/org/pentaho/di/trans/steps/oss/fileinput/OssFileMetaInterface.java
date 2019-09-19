@@ -24,6 +24,7 @@ package org.pentaho.di.trans.steps.oss.fileinput;
 
 import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.trans.step.StepMetaInterface;
+import org.pentaho.di.trans.steps.textfileinput.TextFileInputField;
 
 public interface OssFileMetaInterface extends StepMetaInterface {
 

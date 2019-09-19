@@ -1,10 +1,24 @@
 package org.pentaho.di.trans.steps.oss.filesinput;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.pentaho.di.core.Const;
 import org.pentaho.di.core.exception.KettleException;
-import org.pentaho.di.core.oss.BookMark;
+import org.pentaho.di.core.logging.LogChannelInterface;
+import org.pentaho.di.core.oss.OSSFileObject;
 import org.pentaho.di.core.oss.OssConfig;
+import org.pentaho.di.core.oss.OssWorker;
 import org.pentaho.di.core.oss.OssWorkerUtils;
+import org.pentaho.di.core.row.RowDataUtil;
 import org.pentaho.di.core.row.RowMeta;
+import org.pentaho.di.core.row.RowMetaInterface;
+import org.pentaho.di.core.row.ValueMetaInterface;
+import org.pentaho.di.core.variables.VariableSpace;
+import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStep;
@@ -12,6 +26,7 @@ import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
+import org.pentaho.di.trans.steps.textfileinput.TextFileInputField;
 
 /**
  * OSS多文件输入<br/>
@@ -51,23 +66,149 @@ public class OssFilesInput extends BaseStep implements StepInterface {
 		meta = (OssFilesInputMeta) smi;
 		data = (OssFilesInputData) sdi;
 
-		OssConfig ossConfig = null;
 		if (first) { // we just got started
 			first = false;
 
-			meta.getFields(data.outputRowMeta, getStepname(), null, null, this, repository, metaStore);
-
-			// 输出数据
 			data.outputRowMeta = new RowMeta();
+			meta.getFields(data.outputRowMeta, getStepname(), null, null, this, repository, metaStore);
+			data.convertRowMeta = data.outputRowMeta.cloneToType(ValueMetaInterface.TYPE_STRING);
 
 			// get oss config
-			ossConfig = new OssConfig(data.endpoint, data.accessKey, data.secureKey, data.bucket);
-			BookMark bookMark = OssWorkerUtils.createBookMark(ossConfig, data.fileName, meta.isPrevFlag(), 1000);
-
-			logBasic("读到 [" + bookMark.getFilenames().size() + "] 个文件");
+			OssConfig ossConfig = new OssConfig(data.endpoint, data.accessKey, data.secureKey, data.bucket);
+			data.bookMark = OssWorkerUtils.createBookMark(ossConfig, data.fileName, meta.isPrevFlag(), 1000);
+			data.ossWorker = new OssWorker(ossConfig);
+//			try {
+//				// 打开第一本书
+//				openBook();
+//			} catch (Exception e) {
+//				logError(BaseMessages.getString(PKG, "OssFilesInput.Log.Error.OpenFirstBook"));
+//				stopAll();
+//				return false;
+//			}
 		}
 
-		return false;
+		try {
+			String line = readLine();
+
+//
+//			// 读到空文件
+//			if (line == null && firstLineReaded && !data.bookMark.allReaded()) {
+//				// 读下一个文件
+//				boolean needNextBook2 = data.bookMark.isNeedNextBook();
+//				openBook();
+//				line = readLine(needNextBook2);
+//			}
+
+			if (data.bookMark == null || data.bookMark.hasNoBooks() || data.bookMark.allReaded()) {
+				if (data.bookMark.allReaded()) {
+					logBasic("读到 [" + data.bookMark.getBookNames().size() + "] 个文件");
+					logBasic("");
+				}
+				try {
+					data.ossWorker.close();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				try {
+					data.bookMark.close();
+				} catch (IOException e) {
+					// do nothing
+				}
+				setOutputDone();
+				return false;
+			}
+
+			String[] strings = StringUtils.split(line, data.separator);
+
+			Object[] r = getRows(data.outputRowMeta, data.convertRowMeta, meta.getInputFields(), strings);
+			putRow(data.outputRowMeta, r);
+		} catch (Throwable thr) {
+			throw new KettleException(thr.getMessage(), thr);
+		}
+
+		return true;
+	}
+
+	private String readLine() throws Exception {
+		// 询问打开下一本书
+		boolean needNextBook = data.bookMark.isNeedNextBook();
+		boolean firstLineReaded = needNextBook;
+		String line = null;
+
+		// 只读第一行
+		if (needNextBook && !data.bookMark.allReaded() && firstLineReaded) {
+			line = openNotEmptyBookAndReadFirstLine();
+			if (line == null) {
+				// 读到最后都是空文件
+				return line;
+			}
+		}
+
+		// 非第一行
+		// 1.读到第一行,且为头部,则继续读下一行
+		// 2.读到第一行,部位头部,则不读
+		// 3.读到第一行之后的行,则读一行
+		if ((firstLineReaded && meta.hasHeader()) || !firstLineReaded) {
+			line = data.bookMark.readLine();
+		}
+
+		// 读到最后一行,丢弃空行,递归读下一个文件
+		if (line == null && data.bookMark.isNeedNextBook()) {
+			return readLine();
+		}
+		return line;
+	}
+
+	private String openNotEmptyBookAndReadFirstLine() throws Exception {
+		// 打开书
+		openBook();
+		// 读第一行
+		String line = data.bookMark.readLine();
+		// 读到null,书签的游标自动指向下一本书,这时,都下一本书,读到非空文件或者读完所有文件还是为空,结束
+		if (line == null && !data.bookMark.allReaded()) {
+			logBasic("读到空文件: " + data.bookMark.getCurrentBook());
+			return openNotEmptyBookAndReadFirstLine();
+		}
+		return line;
+	}
+
+	private Object[] getRows(RowMeta outputRowMeta, RowMetaInterface convertRowMeta,
+			TextFileInputField[] textFileInputFields, String[] strings) throws Exception {
+		Object[] r = RowDataUtil.allocateRowData(outputRowMeta.size());
+
+		int nrfields = textFileInputFields.length;
+		int fieldnr;
+
+		for (fieldnr = 0; fieldnr < nrfields; fieldnr++) {
+			TextFileInputField f = textFileInputFields[fieldnr];
+			int valuenr = fieldnr;
+			ValueMetaInterface valueMeta = outputRowMeta.getValueMeta(valuenr);
+			ValueMetaInterface convertMeta = convertRowMeta.getValueMeta(valuenr);
+
+			Object value = null;
+
+			String nullif = fieldnr < nrfields ? f.getNullString() : "";
+			String ifnull = fieldnr < nrfields ? f.getIfNullValue() : "";
+			int trim_type = fieldnr < nrfields ? f.getTrimType() : ValueMetaInterface.TRIM_TYPE_NONE;
+			if (fieldnr < strings.length) {
+				String pol = strings[fieldnr];
+				try {
+					value = valueMeta.convertDataFromString(pol, convertMeta, nullif, ifnull, trim_type);
+				} catch (Exception e) {
+					throw e;
+				}
+			}
+			if (r != null) {
+				r[valuenr] = value;
+			}
+		}
+		return r;
+	}
+
+	private void openBook() throws UnsupportedEncodingException {
+		OSSFileObject ossFileObject = data.ossWorker.getOSSFileObject(data.bookMark.getCurrentBook());
+		data.bookMark.openBook(ossFileObject.getContent(), ossFileObject.getEncoding(), meta.getFileFormatTypeNr());
 	}
 
 	@Override
@@ -82,6 +223,7 @@ public class OssFilesInput extends BaseStep implements StepInterface {
 				data.secureKey = environmentSubstitute(meta.getSecureKey());
 				data.bucket = environmentSubstitute(meta.getBucket());
 				data.fileName = environmentSubstitute(meta.getFileName());
+				data.separator = environmentSubstitute(meta.getSeparator());
 				return true;
 			} catch (Exception e) {
 				logError("An error occurred intialising this step: " + e.getMessage());
@@ -97,6 +239,212 @@ public class OssFilesInput extends BaseStep implements StepInterface {
 		meta = (OssFilesInputMeta) smi;
 		data = (OssFilesInputData) sdi;
 		super.dispose(smi, sdi);
+	}
+
+	public static final String[] guessStringsFromLine(VariableSpace space, LogChannelInterface log, String line,
+			OssFilesInputMeta inf, String delimiter, String enclosure, String escapeCharacter) throws KettleException {
+		List<String> strings = new ArrayList<String>();
+
+		String pol; // piece of line
+
+		try {
+			if (line == null) {
+				return null;
+			}
+
+			if (inf.getFileType().equalsIgnoreCase("CSV")) {
+
+				// Split string in pieces, only for CSV!
+
+				int pos = 0;
+				int length = line.length();
+				boolean dencl = false;
+
+				int len_encl = (enclosure == null ? 0 : enclosure.length());
+				int len_esc = (escapeCharacter == null ? 0 : escapeCharacter.length());
+
+				while (pos < length) {
+					int from = pos;
+					int next;
+
+					boolean encl_found;
+					boolean contains_escaped_enclosures = false;
+					boolean contains_escaped_separators = false;
+
+					// Is the field beginning with an enclosure?
+					// "aa;aa";123;"aaa-aaa";000;...
+					if (len_encl > 0 && line.substring(from, from + len_encl).equalsIgnoreCase(enclosure)) {
+						if (log.isRowLevel()) {
+							log.logRowlevel(BaseMessages.getString(PKG, "OssFilesInput.Log.ConvertLineToRowTitle"),
+									BaseMessages.getString(PKG, "OssFilesInput.Log.ConvertLineToRow",
+											line.substring(from, from + len_encl)));
+						}
+						encl_found = true;
+						int p = from + len_encl;
+
+						boolean is_enclosure = len_encl > 0 && p + len_encl < length
+								&& line.substring(p, p + len_encl).equalsIgnoreCase(enclosure);
+						boolean is_escape = len_esc > 0 && p + len_esc < length
+								&& line.substring(p, p + len_esc).equalsIgnoreCase(escapeCharacter);
+
+						boolean enclosure_after = false;
+
+						// Is it really an enclosure? See if it's not repeated twice or escaped!
+						if ((is_enclosure || is_escape) && p < length - 1) {
+							String strnext = line.substring(p + len_encl, p + 2 * len_encl);
+							if (strnext.equalsIgnoreCase(enclosure)) {
+								p++;
+								enclosure_after = true;
+								dencl = true;
+
+								// Remember to replace them later on!
+								if (is_escape) {
+									contains_escaped_enclosures = true;
+								}
+							}
+						}
+
+						// Look for a closing enclosure!
+						while ((!is_enclosure || enclosure_after) && p < line.length()) {
+							p++;
+							enclosure_after = false;
+							is_enclosure = len_encl > 0 && p + len_encl < length
+									&& line.substring(p, p + len_encl).equals(enclosure);
+							is_escape = len_esc > 0 && p + len_esc < length
+									&& line.substring(p, p + len_esc).equals(escapeCharacter);
+
+							// Is it really an enclosure? See if it's not repeated twice or escaped!
+							if ((is_enclosure || is_escape) && p < length - 1) {
+
+								String strnext = line.substring(p + len_encl, p + 2 * len_encl);
+								if (strnext.equals(enclosure)) {
+									p++;
+									enclosure_after = true;
+									dencl = true;
+
+									// Remember to replace them later on!
+									if (is_escape) {
+										contains_escaped_enclosures = true; // remember
+									}
+								}
+							}
+						}
+
+						if (p >= length) {
+							next = p;
+						} else {
+							next = p + len_encl;
+						}
+
+						if (log.isRowLevel()) {
+							log.logRowlevel(BaseMessages.getString(PKG, "OssFilesInput.Log.ConvertLineToRowTitle"),
+									BaseMessages.getString(PKG, "OssFilesInput.Log.EndOfEnclosure", "" + p));
+						}
+					} else {
+						encl_found = false;
+						boolean found = false;
+						int startpoint = from;
+						// int tries = 1;
+						do {
+							next = line.indexOf(delimiter, startpoint);
+
+							// See if this position is preceded by an escape character.
+							if (len_esc > 0 && next - len_esc > 0) {
+								String before = line.substring(next - len_esc, next);
+
+								if (escapeCharacter.equals(before)) {
+									// take the next separator, this one is escaped...
+									startpoint = next + 1;
+									// tries++;
+									contains_escaped_separators = true;
+								} else {
+									found = true;
+								}
+							} else {
+								found = true;
+							}
+						} while (!found && next >= 0);
+					}
+					if (next == -1) {
+						next = length;
+					}
+
+					if (encl_found) {
+						pol = line.substring(from + len_encl, next - len_encl);
+						if (log.isRowLevel()) {
+							log.logRowlevel(BaseMessages.getString(PKG, "OssFilesInput.Log.ConvertLineToRowTitle"),
+									BaseMessages.getString(PKG, "OssFilesInput.Log.EnclosureFieldFound", "" + pol));
+						}
+					} else {
+						pol = line.substring(from, next);
+						if (log.isRowLevel()) {
+							log.logRowlevel(BaseMessages.getString(PKG, "OssFilesInput.Log.ConvertLineToRowTitle"),
+									BaseMessages.getString(PKG, "OssFilesInput.Log.NormalFieldFound", "" + pol));
+						}
+					}
+
+					if (dencl) {
+						StringBuilder sbpol = new StringBuilder(pol);
+						int idx = sbpol.indexOf(enclosure + enclosure);
+						while (idx >= 0) {
+							sbpol.delete(idx, idx + enclosure.length());
+							idx = sbpol.indexOf(enclosure + enclosure);
+						}
+						pol = sbpol.toString();
+					}
+
+					// replace the escaped enclosures with enclosures...
+					if (contains_escaped_enclosures) {
+						String replace = escapeCharacter + enclosure;
+						String replaceWith = enclosure;
+
+						pol = Const.replace(pol, replace, replaceWith);
+					}
+
+					// replace the escaped separators with separators...
+					if (contains_escaped_separators) {
+						String replace = escapeCharacter + delimiter;
+						String replaceWith = delimiter;
+
+						pol = Const.replace(pol, replace, replaceWith);
+					}
+
+					// Now add pol to the strings found!
+					strings.add(pol);
+
+					pos = next + delimiter.length();
+				}
+				if (pos == length) {
+					if (log.isRowLevel()) {
+						log.logRowlevel(BaseMessages.getString(PKG, "OssFilesInput.Log.ConvertLineToRowTitle"),
+								BaseMessages.getString(PKG, "OssFilesInput.Log.EndOfEmptyLineFound"));
+					}
+					strings.add("");
+				}
+			} else {
+				// Fixed file format: Simply get the strings at the required positions...
+				for (int i = 0; i < inf.getInputFields().length; i++) {
+					TextFileInputField field = inf.getInputFields()[i];
+
+					int length = line.length();
+
+					if (field.getPosition() + field.getLength() <= length) {
+						strings.add(line.substring(field.getPosition(), field.getPosition() + field.getLength()));
+					} else {
+						if (field.getPosition() < length) {
+							strings.add(line.substring(field.getPosition()));
+						} else {
+							strings.add("");
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			throw new KettleException(
+					BaseMessages.getString(PKG, "OssFilesInput.Log.Error.ErrorConvertingLine", e.toString()), e);
+		}
+
+		return strings.toArray(new String[strings.size()]);
 	}
 
 }

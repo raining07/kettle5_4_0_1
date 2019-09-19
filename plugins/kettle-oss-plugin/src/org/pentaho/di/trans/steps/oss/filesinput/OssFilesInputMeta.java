@@ -40,12 +40,12 @@ public class OssFilesInputMeta extends BaseStepMeta implements StepMetaInterface
 	// private static final String NO = "N";
 	private static final String YES = "Y";
 
-	  public static final int FILE_FORMAT_DOS = 0;
-	  public static final int FILE_FORMAT_UNIX = 1;
-	  public static final int FILE_FORMAT_MIXED = 2;
+	public static final int FILE_FORMAT_DOS = 0;
+	public static final int FILE_FORMAT_UNIX = 1;
+	public static final int FILE_FORMAT_MIXED = 2;
 
-	  public static final int FILE_TYPE_CSV = 0;
-	  public static final int FILE_TYPE_FIXED = 1;
+	public static final int FILE_TYPE_CSV = 0;
+	public static final int FILE_TYPE_FIXED = 1;
 
 	/*
 	 * XML tags
@@ -494,6 +494,14 @@ public class OssFilesInputMeta extends BaseStepMeta implements StepMetaInterface
 				throw new KettleStepException(e);
 			}
 		}
+	}
+
+	public boolean hasHeader() {
+		return isHeadFlag();
+	}
+
+	public boolean nameIsPrevious() {
+		return isPrevFlag();
 	}
 
 }

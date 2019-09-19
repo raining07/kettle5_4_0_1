@@ -4,6 +4,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.custom.CTabFolder;
@@ -25,7 +26,9 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.pentaho.di.core.Const;
@@ -40,8 +43,11 @@ import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
+import org.pentaho.di.trans.steps.oss.filesinput.OssFilesInput;
 import org.pentaho.di.trans.steps.oss.filesinput.OssFilesInputMeta;
 import org.pentaho.di.trans.steps.textfileinput.TextFileInputField;
+import org.pentaho.di.ui.core.dialog.EnterNumberDialog;
+import org.pentaho.di.ui.core.dialog.EnterTextDialog;
 import org.pentaho.di.ui.core.widget.ColumnInfo;
 import org.pentaho.di.ui.core.widget.TableView;
 import org.pentaho.di.ui.core.widget.TextVar;
@@ -895,31 +901,138 @@ public class OssFilesInputDialog extends BaseStepDialog implements StepDialogInt
 		String accessKey = transMeta.environmentSubstitute(meta.getAccessKey());
 		String secureKey = transMeta.environmentSubstitute(meta.getSecureKey());
 		String bucket = transMeta.environmentSubstitute(meta.getBucket());
-		boolean prevFlag = meta.isPrevFlag();
 		String fileName = transMeta.environmentSubstitute(meta.getFileName());
 
-		String fileType = transMeta.environmentSubstitute(meta.getEndpoint());
-		String separator = transMeta.environmentSubstitute(meta.getAccessKey());
-		String enclosure = transMeta.environmentSubstitute(meta.getSecureKey());
-		String format = transMeta.environmentSubstitute(meta.getBucket());
+		String fileType = transMeta.environmentSubstitute(meta.getFileType());
+		String separator = transMeta.environmentSubstitute(meta.getSeparator());
+		String enclosure = transMeta.environmentSubstitute(meta.getEnclosure());
+		String format = transMeta.environmentSubstitute(meta.getFormat());
 		String charset = transMeta.environmentSubstitute(meta.getCharset());
-		boolean headFlag = meta.isHeadFlag();
 
 		OssConfig ossConfig = new OssConfig(endpoint, accessKey, secureKey, bucket);
-		BookMark bookMark = OssWorkerUtils.createBookMark(ossConfig, fileName, prevFlag, 10);
+		BookMark bookMark = OssWorkerUtils.createBookMark(ossConfig, fileName, meta.nameIsPrevious(), 10);
+
+		// 读到的文件集合为空
+		if (bookMark.hasNoBooks()) {
+			MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_ERROR);
+			mb.setMessage(BaseMessages.getString(PKG, "TextFileInputDialog.NoValidFileFound.DialogMessage"));
+			mb.setText(BaseMessages.getString(PKG, "System.Dialog.Error.Title"));
+			mb.open();
+			return;
+		}
+
+		int clearFields = meta.hasHeader() ? SWT.YES : SWT.NO;
+		int nrInputFields = meta.getInputFields().length;
+
+		if (meta.hasHeader() && nrInputFields > 0) {
+			MessageBox mb = new MessageBox(shell, SWT.YES | SWT.NO | SWT.CANCEL | SWT.ICON_QUESTION);
+			mb.setMessage(BaseMessages.getString(PKG, "TextFileInputDialog.ClearFieldList.DialogMessage"));
+			mb.setText(BaseMessages.getString(PKG, "TextFileInputDialog.ClearFieldList.DialogTitle"));
+			clearFields = mb.open();
+			if (clearFields == SWT.CANCEL) {
+				return;
+			}
+		}
+
+		wFields.table.removeAll();
+		Table table = wFields.table;
+
+		if (!(clearFields == SWT.YES || !meta.hasHeader() || nrInputFields > 0)) {
+			MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_ERROR);
+			mb.setMessage(BaseMessages.getString(PKG, "TextFileInputDialog.UnableToReadHeaderLine.DialogMessage"));
+			mb.setText(BaseMessages.getString(PKG, "System.Dialog.Error.Title"));
+			mb.open();
+			return;
+		}
+
 		String currentBook = bookMark.getCurrentBook();
 		OssWorker ossWorker = null;
-
 		int fileFormatTypeNr = meta.getFileFormatTypeNr();
 
 		try {
 			ossWorker = new OssWorker(ossConfig);
 			OSSFileObject ossFileObject = ossWorker.getOSSFileObject(currentBook);
 			bookMark.openBook(ossFileObject.getContent(), ossFileObject.getEncoding(), fileFormatTypeNr);
-			String readLine = bookMark.readLine();
-			System.out.println(readLine);
+			String firstLine = bookMark.readLine();
+			if (StringUtils.isEmpty(firstLine)) {
+				throw new Exception("首行为空");
+			}
+			String[] fields = OssFilesInput.guessStringsFromLine(transMeta, log, firstLine, meta, separator, enclosure,
+					null);
+			if (meta.hasHeader()) {
+				// 如果是头 读出第一行作为title
+				for (int i = 0; i < fields.length; i++) {
+					String field = fields[i];
+					if (StringUtils.isEmpty(field)) {
+						field = "Field" + (i + 1);
+					} else {
+						// Trim the field
+						field = Const.trim(field);
+						// Replace all spaces & - with underscore _
+						field = Const.replace(field, " ", "_");
+						field = Const.replace(field, "-", "_");
+					}
+					TableItem item = new TableItem(table, SWT.NONE);
+					item.setText(1, field);
+					item.setText(2, "String"); // The default type is String...
+				}
+			} else {
+				// 沒有title
+				for (int i = 0; i < fields.length; i++) {
+					String field = "Field" + (i + 1);
+					TableItem item = new TableItem(table, SWT.NONE);
+					item.setText(1, field);
+					item.setText(2, "String"); // The default type is String...
+				}
+			}
+			wFields.setRowNums();
+			wFields.optWidth(true);
+
+			// Copy it...
+			getInfo(meta, false);
+			// Sample a few lines to determine the correct type of the fields...
+			String shellText = BaseMessages.getString(PKG, "TextFileInputDialog.LinesToSample.DialogTitle");
+			String lineText = BaseMessages.getString(PKG, "TextFileInputDialog.LinesToSample.DialogMessage");
+			EnterNumberDialog end = new EnterNumberDialog(shell, 100, shellText, lineText);
+			int samples = end.open();
+
+			if (samples < 0) {
+				MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_ERROR);
+				mb.setMessage(BaseMessages.getString(PKG, "TextFileInputDialog.UnableToReadHeaderLine.DialogMessage"));
+				mb.setText(BaseMessages.getString(PKG, "System.Dialog.Error.Title"));
+				mb.open();
+				return;
+			}
+
+			getInfo(meta, false);
+
+			// guess fields
+
 		} catch (Throwable thr) {
 			thr.printStackTrace();
+			wFields.removeAll();
+
+			// OK, what's the result of our search?
+			getData();
+
+			// If we didn't want the list to be cleared, we need to re-inject the previous
+			// values...
+			//
+			if (clearFields == SWT.NO) {
+				getFieldsData(previousMeta, true);
+				wFields.table.setSelection(previousMeta.getInputFields().length, wFields.table.getItemCount() - 1);
+			}
+
+			wFields.removeEmptyRows();
+			wFields.setRowNums();
+			wFields.optWidth(true);
+
+			EnterTextDialog etd = new EnterTextDialog(shell,
+					BaseMessages.getString(PKG, "TextFileInputDialog.ScanResults.DialogTitle"),
+					BaseMessages.getString(PKG, "TextFileInputDialog.ScanResults.DialogMessage"), thr.getMessage(),
+					true);
+			etd.setReadOnly();
+			etd.open();
 		} finally {
 			ossWorker.close();
 			bookMark.closeBook();
