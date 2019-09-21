@@ -132,6 +132,13 @@ public class OssFilesInputDialog extends BaseStepDialog implements StepDialogInt
 	private FormData fdlFileName, fdFileName;
 
 	/*
+	 * LowerLimitMarker
+	 */
+	private Label wlLowerLimitMarker;
+	private TextVar wLowerLimitMarker;
+	private FormData fdlLowerLimitMarker, fdLowerLimitMarker;
+
+	/*
 	 * FileType
 	 */
 	private Label wlFileType;
@@ -296,6 +303,7 @@ public class OssFilesInputDialog extends BaseStepDialog implements StepDialogInt
 		wBucket.addSelectionListener(lsDef);
 		wFileName.addSelectionListener(lsDef);
 		wPrevFlag.addSelectionListener(lsDef);
+		wLowerLimitMarker.addSelectionListener(lsDef);
 
 		// Detect X or ALT-F4 or something that kills this window...
 		shell.addShellListener(new ShellAdapter() {
@@ -439,6 +447,24 @@ public class OssFilesInputDialog extends BaseStepDialog implements StepDialogInt
 		fdFileName.right = new FormAttachment(100, 0);
 		fdFileName.top = new FormAttachment(wPrevFlag, margin);
 		wFileName.setLayoutData(fdFileName);
+
+		// LowerLimitMarker ...
+		wlLowerLimitMarker = new Label(wOssConfigComp, SWT.RIGHT);
+		wlLowerLimitMarker.setText(msgProp("OssFilesInput.LowerLimitMarker.Label"));
+		props.setLook(wlLowerLimitMarker);
+		fdlLowerLimitMarker = new FormData();
+		fdlLowerLimitMarker.left = new FormAttachment(0, 0);
+		fdlLowerLimitMarker.right = new FormAttachment(middle, -margin);
+		fdlLowerLimitMarker.top = new FormAttachment(wFileName, margin);
+		wlLowerLimitMarker.setLayoutData(fdlLowerLimitMarker);
+		wLowerLimitMarker = new TextVar(transMeta, wOssConfigComp, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		props.setLook(wLowerLimitMarker);
+		wLowerLimitMarker.addModifyListener(lsMod);
+		fdLowerLimitMarker = new FormData();
+		fdLowerLimitMarker.left = new FormAttachment(middle, 0);
+		fdLowerLimitMarker.right = new FormAttachment(100, 0);
+		fdLowerLimitMarker.top = new FormAttachment(wFileName, margin);
+		wLowerLimitMarker.setLayoutData(fdLowerLimitMarker);
 
 		fdOssConfigComp = new FormData();
 		fdOssConfigComp.left = new FormAttachment(0, 0);
@@ -725,6 +751,7 @@ public class OssFilesInputDialog extends BaseStepDialog implements StepDialogInt
 		wBucket.setText(Const.NVL(input.getBucket(), ""));
 		wFileName.setText(Const.NVL(input.getFileName(), ""));
 		wPrevFlag.setSelection(input.isPrevFlag());
+		wLowerLimitMarker.setText(Const.NVL(input.getLowerLimitMarker(), ""));
 
 		// content
 		wFileType.setText(Const.NVL(input.getFileType(), ""));
@@ -843,6 +870,7 @@ public class OssFilesInputDialog extends BaseStepDialog implements StepDialogInt
 		meta.setBucket(wBucket.getText());
 		meta.setFileName(wFileName.getText());
 		meta.setPrevFlag(wPrevFlag.getSelection());
+		meta.setLowerLimitMarker(wLowerLimitMarker.getText());
 
 		// content
 		meta.setFileType(wFileType.getText());
@@ -902,6 +930,7 @@ public class OssFilesInputDialog extends BaseStepDialog implements StepDialogInt
 		String secureKey = transMeta.environmentSubstitute(meta.getSecureKey());
 		String bucket = transMeta.environmentSubstitute(meta.getBucket());
 		String fileName = transMeta.environmentSubstitute(meta.getFileName());
+		String lowerLimitMarker = transMeta.environmentSubstitute(meta.getLowerLimitMarker());
 
 		String fileType = transMeta.environmentSubstitute(meta.getFileType());
 		String separator = transMeta.environmentSubstitute(meta.getSeparator());
@@ -910,7 +939,8 @@ public class OssFilesInputDialog extends BaseStepDialog implements StepDialogInt
 		String charset = transMeta.environmentSubstitute(meta.getCharset());
 
 		OssConfig ossConfig = new OssConfig(endpoint, accessKey, secureKey, bucket);
-		BookMark bookMark = OssWorkerUtils.createBookMark(ossConfig, fileName, meta.nameIsPrevious(), 10);
+		BookMark bookMark = OssWorkerUtils.createBookMark(ossConfig, fileName, lowerLimitMarker, meta.nameIsPrevious(),
+				10);
 
 		// 读到的文件集合为空
 		if (bookMark.hasNoBooks()) {

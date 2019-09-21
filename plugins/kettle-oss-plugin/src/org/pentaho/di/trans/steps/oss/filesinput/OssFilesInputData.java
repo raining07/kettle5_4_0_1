@@ -23,8 +23,8 @@ public class OssFilesInputData extends BaseStepData implements StepDataInterface
 	public String secureKey;
 	public String bucket;
 	public String fileName;
-
 	public String separator;
+	public String lowerLimitMarker;
 
 	// params end
 

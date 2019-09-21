@@ -55,6 +55,7 @@ public class OssFilesInputMeta extends BaseStepMeta implements StepMetaInterface
 	private final String TAG_SECURE_KEY = "secure_key";
 	private final String TAG_BUCKET = "bucket";
 	private final String TAG_FILE_NAME = "file_name";
+	private final String TAG_LOWER_LIMIT_MARKER = "lower_limit_maker";
 	private final String TAG_PREV_FLAG = "prev_flag";
 	private final String TAG_FILE_TYPE = "file_type";
 	private final String TAG_SEPARATOR = "separator";
@@ -72,6 +73,7 @@ public class OssFilesInputMeta extends BaseStepMeta implements StepMetaInterface
 	private String bucket;
 	private boolean prevFlag;
 	private String fileName;
+	private String lowerLimitMarker;
 
 	/*
 	 * Content
@@ -135,6 +137,14 @@ public class OssFilesInputMeta extends BaseStepMeta implements StepMetaInterface
 
 	public void setFileName(String fileName) {
 		this.fileName = fileName;
+	}
+
+	public String getLowerLimitMarker() {
+		return lowerLimitMarker;
+	}
+
+	public void setLowerLimitMarker(String lowerLimitMarker) {
+		this.lowerLimitMarker = lowerLimitMarker;
 	}
 
 	public String getFileType() {
@@ -218,6 +228,7 @@ public class OssFilesInputMeta extends BaseStepMeta implements StepMetaInterface
 		bucket = "";
 		fileName = "";
 		prevFlag = true;
+		lowerLimitMarker = "";
 
 		// content
 		fileType = "CSV";
@@ -271,6 +282,7 @@ public class OssFilesInputMeta extends BaseStepMeta implements StepMetaInterface
 			bucket = XMLHandler.getTagValue(stepnode, TAG_BUCKET);
 			fileName = XMLHandler.getTagValue(stepnode, TAG_FILE_NAME);
 			prevFlag = YES.equalsIgnoreCase(XMLHandler.getTagValue(stepnode, TAG_PREV_FLAG));
+			lowerLimitMarker = XMLHandler.getTagValue(stepnode, TAG_LOWER_LIMIT_MARKER);
 
 			// content
 			fileType = XMLHandler.getTagValue(stepnode, TAG_FILE_TYPE);
@@ -323,6 +335,7 @@ public class OssFilesInputMeta extends BaseStepMeta implements StepMetaInterface
 		retval.append("    ").append(XMLHandler.addTagValue(TAG_BUCKET, bucket));
 		retval.append("    ").append(XMLHandler.addTagValue(TAG_FILE_NAME, fileName));
 		retval.append("    ").append(XMLHandler.addTagValue(TAG_PREV_FLAG, prevFlag));
+		retval.append("    ").append(XMLHandler.addTagValue(TAG_LOWER_LIMIT_MARKER, lowerLimitMarker));
 
 		// content
 		retval.append("    ").append(XMLHandler.addTagValue(TAG_FILE_TYPE, fileType));
@@ -372,6 +385,7 @@ public class OssFilesInputMeta extends BaseStepMeta implements StepMetaInterface
 			bucket = rep.getStepAttributeString(id_step, TAG_BUCKET);
 			fileName = rep.getStepAttributeString(id_step, TAG_FILE_NAME);
 			prevFlag = rep.getStepAttributeBoolean(id_step, TAG_PREV_FLAG);
+			lowerLimitMarker = rep.getStepAttributeString(id_step, TAG_LOWER_LIMIT_MARKER);
 
 			// content
 			fileType = rep.getStepAttributeString(id_step, TAG_FILE_TYPE);
@@ -423,6 +437,7 @@ public class OssFilesInputMeta extends BaseStepMeta implements StepMetaInterface
 			rep.saveStepAttribute(id_transformation, id_step, TAG_BUCKET, bucket);
 			rep.saveStepAttribute(id_transformation, id_step, TAG_FILE_NAME, fileName);
 			rep.saveStepAttribute(id_transformation, id_step, TAG_PREV_FLAG, prevFlag);
+			rep.saveStepAttribute(id_transformation, id_step, TAG_LOWER_LIMIT_MARKER, lowerLimitMarker);
 
 			// content
 			rep.saveStepAttribute(id_transformation, id_step, TAG_FILE_TYPE, fileType);

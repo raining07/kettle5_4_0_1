@@ -3,6 +3,7 @@ package org.pentaho.di.trans.steps.oss.filesinput;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
@@ -16,6 +17,7 @@ import org.pentaho.di.core.oss.OssWorkerUtils;
 import org.pentaho.di.core.row.RowDataUtil;
 import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
+import org.pentaho.di.core.row.ValueMeta;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.i18n.BaseMessages;
@@ -49,6 +51,8 @@ import org.pentaho.di.trans.steps.textfileinput.TextFileInputField;
  */
 public class OssFilesInput extends BaseStep implements StepInterface {
 
+	private final String FIELD_FILE_NAME = "file_name";
+
 	private static Class<?> PKG = OssFilesInputMeta.class; // for i18n purposes
 
 	private OssFilesInputMeta meta;
@@ -69,13 +73,20 @@ public class OssFilesInput extends BaseStep implements StepInterface {
 		if (first) { // we just got started
 			first = false;
 
+			// 追加一列-文件名 begin
+			List<TextFileInputField> fields = Arrays.asList(meta.getInputFields());
+			fields.add(genFileNameField());
+			meta.setInputFields((TextFileInputField[]) fields.toArray());
+			// 追加一列-文件名 end
+
 			data.outputRowMeta = new RowMeta();
 			meta.getFields(data.outputRowMeta, getStepname(), null, null, this, repository, metaStore);
 			data.convertRowMeta = data.outputRowMeta.cloneToType(ValueMetaInterface.TYPE_STRING);
 
 			// get oss config
 			OssConfig ossConfig = new OssConfig(data.endpoint, data.accessKey, data.secureKey, data.bucket);
-			data.bookMark = OssWorkerUtils.createBookMark(ossConfig, data.fileName, meta.isPrevFlag(), 1000);
+			data.bookMark = OssWorkerUtils.createBookMark(ossConfig, data.fileName, data.lowerLimitMarker,
+					meta.isPrevFlag(), 1000);
 			data.ossWorker = new OssWorker(ossConfig);
 //			try {
 //				// 打开第一本书
@@ -120,6 +131,11 @@ public class OssFilesInput extends BaseStep implements StepInterface {
 			}
 
 			String[] strings = StringUtils.split(line, data.separator);
+			// 追加一列-文件名 begin
+			List<String> list = Arrays.asList(strings);
+			list.add(data.bookMark.getCurrentBook());
+			strings = (String[]) list.toArray();
+			// 追加一列-文件名 end
 
 			Object[] r = getRows(data.outputRowMeta, data.convertRowMeta, meta.getInputFields(), strings);
 			putRow(data.outputRowMeta, r);
@@ -130,6 +146,19 @@ public class OssFilesInput extends BaseStep implements StepInterface {
 		return true;
 	}
 
+	private TextFileInputField genFileNameField() {
+		TextFileInputField field = new TextFileInputField();
+		field.setName(FIELD_FILE_NAME);
+		field.setType(ValueMeta.getType("String"));
+		return field;
+	}
+
+	/**
+	 * 多文件读行:1.如果空文件,递归读下一个文件
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
 	private String readLine() throws Exception {
 		// 询问打开下一本书
 		boolean needNextBook = data.bookMark.isNeedNextBook();

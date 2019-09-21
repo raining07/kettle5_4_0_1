@@ -69,9 +69,9 @@ public class OssWorker implements Closeable {
 	public void doDownload(String bucket, String remoteFileName, String localPath, String localFileName) {
 	}
 
-	public List<String> getOssFiles(String fileName, boolean prevFlag, int limit) {
-		ListObjectsRequest listObjectsRequest = new ListObjectsRequest(this.config.getBucket(), fileName, null, null,
-				limit);
+	public List<String> getOssFiles(String fileName, String lowerLimitMarker, boolean prevFlag, int limit) {
+		ListObjectsRequest listObjectsRequest = new ListObjectsRequest(this.config.getBucket(), fileName,
+				lowerLimitMarker, null, limit);
 		List<OSSObjectSummary> objectSummaries = ossClient.listObjects(listObjectsRequest).getObjectSummaries();
 		List<String> ossFiles = Lists.newArrayList();
 		for (OSSObjectSummary ossObjectSummary : objectSummaries) {
