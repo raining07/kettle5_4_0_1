@@ -3,7 +3,6 @@ package org.pentaho.di.trans.steps.oss.filesinput;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
@@ -29,6 +28,8 @@ import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
 import org.pentaho.di.trans.steps.textfileinput.TextFileInputField;
+
+import com.google.common.collect.Lists;
 
 /**
  * OSS多文件输入<br/>
@@ -74,9 +75,9 @@ public class OssFilesInput extends BaseStep implements StepInterface {
 			first = false;
 
 			// 追加一列-文件名 begin
-			List<TextFileInputField> fields = Arrays.asList(meta.getInputFields());
+			List<TextFileInputField> fields = Lists.newArrayList(meta.getInputFields());
 			fields.add(genFileNameField());
-			meta.setInputFields((TextFileInputField[]) fields.toArray());
+			meta.setInputFields(fields.toArray(new TextFileInputField[fields.size()]));
 			// 追加一列-文件名 end
 
 			data.outputRowMeta = new RowMeta();
@@ -132,9 +133,9 @@ public class OssFilesInput extends BaseStep implements StepInterface {
 
 			String[] strings = StringUtils.split(line, data.separator);
 			// 追加一列-文件名 begin
-			List<String> list = Arrays.asList(strings);
+			List<String> list = Lists.newArrayList(strings);
 			list.add(data.bookMark.getCurrentBook());
-			strings = (String[]) list.toArray();
+			strings = list.toArray(new String[list.size()]);
 			// 追加一列-文件名 end
 
 			Object[] r = getRows(data.outputRowMeta, data.convertRowMeta, meta.getInputFields(), strings);
