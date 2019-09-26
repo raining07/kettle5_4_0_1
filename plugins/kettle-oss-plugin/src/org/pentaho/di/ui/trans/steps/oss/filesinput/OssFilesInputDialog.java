@@ -40,7 +40,9 @@ import org.pentaho.di.core.oss.OssWorker;
 import org.pentaho.di.core.oss.OssWorkerUtils;
 import org.pentaho.di.core.row.ValueMeta;
 import org.pentaho.di.i18n.BaseMessages;
+import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
+import org.pentaho.di.trans.TransPreviewFactory;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
 import org.pentaho.di.trans.steps.oss.filesinput.OssFilesInput;
@@ -48,9 +50,11 @@ import org.pentaho.di.trans.steps.oss.filesinput.OssFilesInputMeta;
 import org.pentaho.di.trans.steps.textfileinput.TextFileInputField;
 import org.pentaho.di.ui.core.dialog.EnterNumberDialog;
 import org.pentaho.di.ui.core.dialog.EnterTextDialog;
+import org.pentaho.di.ui.core.dialog.PreviewRowsDialog;
 import org.pentaho.di.ui.core.widget.ColumnInfo;
 import org.pentaho.di.ui.core.widget.TableView;
 import org.pentaho.di.ui.core.widget.TextVar;
+import org.pentaho.di.ui.trans.dialog.TransPreviewProgressDialog;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
 /**
@@ -1077,5 +1081,43 @@ public class OssFilesInputDialog extends BaseStepDialog implements StepDialogInt
 
 	private void preview() {
 		logBasic("Preview...");
+
+	    // Create the XML input step
+	    OssFilesInputMeta oneMeta = new OssFilesInputMeta();
+	    getInfo( oneMeta, false );
+
+	    TransMeta previewMeta = TransPreviewFactory.generatePreviewTransformation( transMeta, oneMeta,
+	      wStepname.getText() );
+
+	    EnterNumberDialog numberDialog =
+	        new EnterNumberDialog( shell, props.getDefaultPreviewSize(), BaseMessages.getString( PKG,
+	            "TextFileInputDialog.PreviewSize.DialogTitle" ), BaseMessages.getString( PKG,
+	            "TextFileInputDialog.PreviewSize.DialogMessage" ) );
+	    int previewSize = numberDialog.open();
+	    if ( previewSize > 0 ) {
+	      TransPreviewProgressDialog progressDialog =
+	          new TransPreviewProgressDialog( shell, previewMeta, new String[] { wStepname.getText() },
+	              new int[] { previewSize } );
+	      progressDialog.open();
+
+	      Trans trans = progressDialog.getTrans();
+	      String loggingText = progressDialog.getLoggingText();
+
+	      if ( !progressDialog.isCancelled() ) {
+	        if ( trans.getResult() != null && trans.getResult().getNrErrors() > 0 ) {
+	          EnterTextDialog etd =
+	              new EnterTextDialog( shell, BaseMessages.getString( PKG, "System.Dialog.PreviewError.Title" ),
+	                  BaseMessages.getString( PKG, "System.Dialog.PreviewError.Message" ), loggingText, true );
+	          etd.setReadOnly();
+	          etd.open();
+	        }
+	      }
+
+	      PreviewRowsDialog prd =
+	          new PreviewRowsDialog( shell, transMeta, SWT.NONE, wStepname.getText(), progressDialog
+	              .getPreviewRowsMeta( wStepname.getText() ), progressDialog.getPreviewRows( wStepname.getText() ),
+	              loggingText );
+	      prd.open();
+	    }
 	}
 }

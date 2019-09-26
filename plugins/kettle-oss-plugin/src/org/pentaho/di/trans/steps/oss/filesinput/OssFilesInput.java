@@ -5,7 +5,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.logging.LogChannelInterface;
@@ -131,7 +130,8 @@ public class OssFilesInput extends BaseStep implements StepInterface {
 				return false;
 			}
 
-			String[] strings = StringUtils.split(line, data.separator);
+			// String[] strings = StringUtils.split(line, data.separator);
+			String[] strings = line.split("\\" +data.separator);
 			// 追加一列-文件名 begin
 			List<String> list = Lists.newArrayList(strings);
 			list.add(data.bookMark.getCurrentBook());
