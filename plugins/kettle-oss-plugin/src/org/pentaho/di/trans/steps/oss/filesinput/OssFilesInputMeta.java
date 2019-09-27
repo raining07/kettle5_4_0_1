@@ -34,7 +34,7 @@ import org.w3c.dom.Node;
  * @author xuejian
  *
  */
-@Step(id = "OssFilesInput", image = "oss-filesInput.png", i18nPackageName = "org.pentaho.di.trans.steps.oss.filesInput", name = "OssFilesInput.Name", description = "OssFilesInput.TooltipDesc", categoryDescription = "i18n:org.pentaho.di.trans.steps.oss.filesInput:OssFilesInput.Step.Category")
+@Step(id = "OssFilesInput", image = "oss-filesInput.png", i18nPackageName = "org.pentaho.di.trans.steps.oss.filesInput", name = "OssFilesInput.Name", description = "OssFilesInput.TooltipDesc", categoryDescription = "i18n:org.pentaho.di.trans.steps.oss.filesinput:OssFilesInput.Step.Category")
 public class OssFilesInputMeta extends BaseStepMeta implements StepMetaInterface {
 
 	// private static final String NO = "N";
