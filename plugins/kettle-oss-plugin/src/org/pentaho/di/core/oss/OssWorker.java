@@ -70,12 +70,12 @@ public class OssWorker implements Closeable {
 	}
 
 	public List<String> getOssFiles(String fileName, String lowerLimitMarker, boolean nameAsPrevious, int limit) {
-		ListObjectsRequest listObjectsRequest = new ListObjectsRequest(this.config.getBucket(), fileName,
-				lowerLimitMarker, null, limit);
 		if (!nameAsPrevious) {
 			// 文件名称不作为前缀,即全称
 			return Lists.newArrayList(fileName);
 		}
+		ListObjectsRequest listObjectsRequest = new ListObjectsRequest(this.config.getBucket(), fileName,
+				lowerLimitMarker, null, limit);
 		List<OSSObjectSummary> objectSummaries = ossClient.listObjects(listObjectsRequest).getObjectSummaries();
 		List<String> ossFiles = Lists.newArrayList();
 		for (OSSObjectSummary ossObjectSummary : objectSummaries) {

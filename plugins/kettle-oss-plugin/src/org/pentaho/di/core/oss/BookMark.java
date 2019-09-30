@@ -22,8 +22,8 @@ public class BookMark implements Closeable {
 	private List<String> bookNames; // 要读的所有文件名
 	private int bufferSize;
 	private int readFileIndex = 0; // 读到第几个文件(从0开始)
-	private Map<String, Integer> readLinesMap = new HashMap<>(); // 读到第几行(从0开始)
-	private Map<String, Boolean> readedMap = new HashMap<>(); // 阅读标记
+	private Map<String, Integer> readLinesMap = new HashMap<String, Integer>(); // 读到第几行(从0开始)
+	private Map<String, Boolean> readedMap = new HashMap<String, Boolean>(); // 阅读标记
 	private InputStreamReader reader = null;
 	private EncodingType encodingType;
 	private int formatNr;
@@ -64,6 +64,10 @@ public class BookMark implements Closeable {
 
 	public boolean isNeedNextBook() {
 		return needNextBook;
+	}
+
+	public Map<String, Integer> getReadLinesMap() {
+		return readLinesMap;
 	}
 
 	/**

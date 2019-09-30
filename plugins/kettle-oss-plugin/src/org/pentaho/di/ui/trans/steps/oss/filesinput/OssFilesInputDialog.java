@@ -280,7 +280,16 @@ public class OssFilesInputDialog extends BaseStepDialog implements StepDialogInt
 		};
 		lsGet = new Listener() {
 			public void handleEvent(Event e) {
-				get();
+				try {
+					get();
+				} catch (Exception exp) {
+					// TODO Auto-generated catch block
+					exp.printStackTrace();
+					MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_ERROR);
+					mb.setMessage(exp.toString());
+					mb.setText(exp.getMessage());
+					mb.open();
+				}
 			}
 		};
 		lsPreview = new Listener() {
@@ -911,7 +920,7 @@ public class OssFilesInputDialog extends BaseStepDialog implements StepDialogInt
 		}
 	}
 
-	private void get() {
+	private void get() throws Exception {
 		if (wFileType.getText().equalsIgnoreCase("CSV")) {
 			getCSV();
 		} else {
@@ -920,7 +929,7 @@ public class OssFilesInputDialog extends BaseStepDialog implements StepDialogInt
 	}
 
 	// Get the data layout
-	private void getCSV() {
+	private void getCSV() throws Exception {
 		logBasic("CSV...");
 
 		// Dialog inputs
@@ -949,7 +958,7 @@ public class OssFilesInputDialog extends BaseStepDialog implements StepDialogInt
 		// 读到的文件集合为空
 		if (bookMark.hasNoBooks()) {
 			MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_ERROR);
-			mb.setMessage(BaseMessages.getString(PKG, "TextFileInputDialog.NoValidFileFound.DialogMessage"));
+			mb.setMessage(BaseMessages.getString(PKG, "OssFilesInputDialog.NoValidFileFound.DialogMessage"));
 			mb.setText(BaseMessages.getString(PKG, "System.Dialog.Error.Title"));
 			mb.open();
 			return;
@@ -960,8 +969,8 @@ public class OssFilesInputDialog extends BaseStepDialog implements StepDialogInt
 
 		if (meta.hasHeader() && nrInputFields > 0) {
 			MessageBox mb = new MessageBox(shell, SWT.YES | SWT.NO | SWT.CANCEL | SWT.ICON_QUESTION);
-			mb.setMessage(BaseMessages.getString(PKG, "TextFileInputDialog.ClearFieldList.DialogMessage"));
-			mb.setText(BaseMessages.getString(PKG, "TextFileInputDialog.ClearFieldList.DialogTitle"));
+			mb.setMessage(BaseMessages.getString(PKG, "OssFilesInputDialog.ClearFieldList.DialogMessage"));
+			mb.setText(BaseMessages.getString(PKG, "OssFilesInputDialog.ClearFieldList.DialogTitle"));
 			clearFields = mb.open();
 			if (clearFields == SWT.CANCEL) {
 				return;
@@ -973,7 +982,7 @@ public class OssFilesInputDialog extends BaseStepDialog implements StepDialogInt
 
 		if (!(clearFields == SWT.YES || !meta.hasHeader() || nrInputFields > 0)) {
 			MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_ERROR);
-			mb.setMessage(BaseMessages.getString(PKG, "TextFileInputDialog.UnableToReadHeaderLine.DialogMessage"));
+			mb.setMessage(BaseMessages.getString(PKG, "OssFilesInputDialog.UnableToReadHeaderLine.DialogMessage"));
 			mb.setText(BaseMessages.getString(PKG, "System.Dialog.Error.Title"));
 			mb.open();
 			return;
@@ -1024,21 +1033,21 @@ public class OssFilesInputDialog extends BaseStepDialog implements StepDialogInt
 
 			// Copy it...
 			getInfo(meta, false);
-			// Sample a few lines to determine the correct type of the fields...
-			String shellText = BaseMessages.getString(PKG, "TextFileInputDialog.LinesToSample.DialogTitle");
-			String lineText = BaseMessages.getString(PKG, "TextFileInputDialog.LinesToSample.DialogMessage");
-			EnterNumberDialog end = new EnterNumberDialog(shell, 100, shellText, lineText);
-			int samples = end.open();
-
-			if (samples < 0) {
-				MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_ERROR);
-				mb.setMessage(BaseMessages.getString(PKG, "TextFileInputDialog.UnableToReadHeaderLine.DialogMessage"));
-				mb.setText(BaseMessages.getString(PKG, "System.Dialog.Error.Title"));
-				mb.open();
-				return;
-			}
-
-			getInfo(meta, false);
+//			// Sample a few lines to determine the correct type of the fields...
+//			String shellText = BaseMessages.getString(PKG, "TextFileInputDialog.LinesToSample.DialogTitle");
+//			String lineText = BaseMessages.getString(PKG, "TextFileInputDialog.LinesToSample.DialogMessage");
+//			EnterNumberDialog end = new EnterNumberDialog(shell, 100, shellText, lineText);
+//			int samples = end.open();
+//
+//			if (samples < 0) {
+//				MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_ERROR);
+//				mb.setMessage(BaseMessages.getString(PKG, "TextFileInputDialog.UnableToReadHeaderLine.DialogMessage"));
+//				mb.setText(BaseMessages.getString(PKG, "System.Dialog.Error.Title"));
+//				mb.open();
+//				return;
+//			}
+//
+//			getInfo(meta, false);
 
 			// guess fields
 
@@ -1082,42 +1091,39 @@ public class OssFilesInputDialog extends BaseStepDialog implements StepDialogInt
 	private void preview() {
 		logBasic("Preview...");
 
-	    // Create the XML input step
-	    OssFilesInputMeta oneMeta = new OssFilesInputMeta();
-	    getInfo( oneMeta, false );
+		// Create the XML input step
+		OssFilesInputMeta oneMeta = new OssFilesInputMeta();
+		getInfo(oneMeta, false);
 
-	    TransMeta previewMeta = TransPreviewFactory.generatePreviewTransformation( transMeta, oneMeta,
-	      wStepname.getText() );
+		TransMeta previewMeta = TransPreviewFactory.generatePreviewTransformation(transMeta, oneMeta,
+				wStepname.getText());
 
-	    EnterNumberDialog numberDialog =
-	        new EnterNumberDialog( shell, props.getDefaultPreviewSize(), BaseMessages.getString( PKG,
-	            "TextFileInputDialog.PreviewSize.DialogTitle" ), BaseMessages.getString( PKG,
-	            "TextFileInputDialog.PreviewSize.DialogMessage" ) );
-	    int previewSize = numberDialog.open();
-	    if ( previewSize > 0 ) {
-	      TransPreviewProgressDialog progressDialog =
-	          new TransPreviewProgressDialog( shell, previewMeta, new String[] { wStepname.getText() },
-	              new int[] { previewSize } );
-	      progressDialog.open();
+		EnterNumberDialog numberDialog = new EnterNumberDialog(shell, props.getDefaultPreviewSize(),
+				BaseMessages.getString(PKG, "TextFileInputDialog.PreviewSize.DialogTitle"),
+				BaseMessages.getString(PKG, "TextFileInputDialog.PreviewSize.DialogMessage"));
+		int previewSize = numberDialog.open();
+		if (previewSize > 0) {
+			TransPreviewProgressDialog progressDialog = new TransPreviewProgressDialog(shell, previewMeta,
+					new String[] { wStepname.getText() }, new int[] { previewSize });
+			progressDialog.open();
 
-	      Trans trans = progressDialog.getTrans();
-	      String loggingText = progressDialog.getLoggingText();
+			Trans trans = progressDialog.getTrans();
+			String loggingText = progressDialog.getLoggingText();
 
-	      if ( !progressDialog.isCancelled() ) {
-	        if ( trans.getResult() != null && trans.getResult().getNrErrors() > 0 ) {
-	          EnterTextDialog etd =
-	              new EnterTextDialog( shell, BaseMessages.getString( PKG, "System.Dialog.PreviewError.Title" ),
-	                  BaseMessages.getString( PKG, "System.Dialog.PreviewError.Message" ), loggingText, true );
-	          etd.setReadOnly();
-	          etd.open();
-	        }
-	      }
+			if (!progressDialog.isCancelled()) {
+				if (trans.getResult() != null && trans.getResult().getNrErrors() > 0) {
+					EnterTextDialog etd = new EnterTextDialog(shell,
+							BaseMessages.getString(PKG, "System.Dialog.PreviewError.Title"),
+							BaseMessages.getString(PKG, "System.Dialog.PreviewError.Message"), loggingText, true);
+					etd.setReadOnly();
+					etd.open();
+				}
+			}
 
-	      PreviewRowsDialog prd =
-	          new PreviewRowsDialog( shell, transMeta, SWT.NONE, wStepname.getText(), progressDialog
-	              .getPreviewRowsMeta( wStepname.getText() ), progressDialog.getPreviewRows( wStepname.getText() ),
-	              loggingText );
-	      prd.open();
-	    }
+			PreviewRowsDialog prd = new PreviewRowsDialog(shell, transMeta, SWT.NONE, wStepname.getText(),
+					progressDialog.getPreviewRowsMeta(wStepname.getText()),
+					progressDialog.getPreviewRows(wStepname.getText()), loggingText);
+			prd.open();
+		}
 	}
 }

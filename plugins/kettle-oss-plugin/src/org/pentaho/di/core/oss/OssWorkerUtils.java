@@ -13,9 +13,10 @@ public class OssWorkerUtils {
 	 * @param prevFlag  文件名是否为前缀
 	 * @param limit     限定文件数量
 	 * @return 书签
+	 * @throws Exception 
 	 */
 	public static BookMark createBookMark(OssConfig ossConfig, String fileName, String lowerLimitMarker,
-			boolean prevFlag, int limit) {
+			boolean prevFlag, int limit) throws Exception {
 		OssWorker ossWorker = null;
 		try {
 			ossWorker = new OssWorker(ossConfig);

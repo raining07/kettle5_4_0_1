@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.exception.KettleException;
@@ -85,35 +86,36 @@ public class OssFilesInput extends BaseStep implements StepInterface {
 
 			// get oss config
 			OssConfig ossConfig = new OssConfig(data.endpoint, data.accessKey, data.secureKey, data.bucket);
-			data.bookMark = OssWorkerUtils.createBookMark(ossConfig, data.fileName, data.lowerLimitMarker,
-					meta.isPrevFlag(), 1000);
+			try {
+				data.bookMark = OssWorkerUtils.createBookMark(ossConfig, data.fileName, data.lowerLimitMarker,
+						meta.isPrevFlag(), 1000);
+			} catch (Exception e) {
+				throw new KettleException(e.getMessage(), e);
+			}
 			data.ossWorker = new OssWorker(ossConfig);
-//			try {
-//				// 打开第一本书
-//				openBook();
-//			} catch (Exception e) {
-//				logError(BaseMessages.getString(PKG, "OssFilesInput.Log.Error.OpenFirstBook"));
-//				stopAll();
-//				return false;
-//			}
+			// 匹配不到文件
+			if (data.bookMark.hasNoBooks()) {
+				log.logBasic("没有读到任何文件");
+				setOutputDone();
+				return false;
+			} else {
+				log.logBasic("↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓读到文件列表↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓");
+				for (String book : data.bookMark.getBookNames()) {
+					log.logBasic(book);
+				}
+				log.logBasic("↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑读到文件列表↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑");
+			}
 		}
 
 		try {
 			String line = readLine();
 
-//
-//			// 读到空文件
-//			if (line == null && firstLineReaded && !data.bookMark.allReaded()) {
-//				// 读下一个文件
-//				boolean needNextBook2 = data.bookMark.isNeedNextBook();
-//				openBook();
-//				line = readLine(needNextBook2);
-//			}
-
-			if (data.bookMark == null || data.bookMark.hasNoBooks() || data.bookMark.allReaded()) {
+			if (data.bookMark == null || data.bookMark.allReaded()) {
 				if (data.bookMark.allReaded()) {
-					logBasic("读到 [" + data.bookMark.getBookNames().size() + "] 个文件");
-					logBasic("");
+					logBasic("读到 [" + data.bookMark.getBookNames().size() + "] 个文件:");
+					for (Map.Entry<String, Integer> entry : data.bookMark.getReadLinesMap().entrySet()) {
+						logBasic("文件[" + entry.getKey() + "] : " + entry.getValue() + "行");
+					}
 				}
 				try {
 					data.ossWorker.close();
@@ -131,7 +133,14 @@ public class OssFilesInput extends BaseStep implements StepInterface {
 			}
 
 			// String[] strings = StringUtils.split(line, data.separator);
-			String[] strings = line.split("\\" +data.separator);
+			String[] strings = line.split("\\" + data.separator);
+//			String line_ = "";
+//			for(String str: strings) {
+//				line_ += str + data.separator;
+//			}
+//			log.logBasic(meta.getCharset());
+//			log.logBasic(line);
+//			log.logBasic(line_);
 			// 追加一列-文件名 begin
 			List<String> list = Lists.newArrayList(strings);
 			list.add(data.bookMark.getCurrentBook());
@@ -161,6 +170,10 @@ public class OssFilesInput extends BaseStep implements StepInterface {
 	 * @throws Exception
 	 */
 	private String readLine() throws Exception {
+		if (data.bookMark.allReaded()) {
+			return null;
+		}
+
 		// 询问打开下一本书
 		boolean needNextBook = data.bookMark.isNeedNextBook();
 		boolean firstLineReaded = needNextBook;
@@ -177,8 +190,9 @@ public class OssFilesInput extends BaseStep implements StepInterface {
 
 		// 非第一行
 		// 1.读到第一行,且为头部,则继续读下一行
-		// 2.读到第一行,部位头部,则不读
+		// 2.读到第一行,不为头部,则不读
 		// 3.读到第一行之后的行,则读一行
+
 		if ((firstLineReaded && meta.hasHeader()) || !firstLineReaded) {
 			line = data.bookMark.readLine();
 		}
@@ -238,7 +252,7 @@ public class OssFilesInput extends BaseStep implements StepInterface {
 
 	private void openBook() throws UnsupportedEncodingException {
 		OSSFileObject ossFileObject = data.ossWorker.getOSSFileObject(data.bookMark.getCurrentBook());
-		data.bookMark.openBook(ossFileObject.getContent(), ossFileObject.getEncoding(), meta.getFileFormatTypeNr());
+		data.bookMark.openBook(ossFileObject.getContent(), this.meta.getCharset(), meta.getFileFormatTypeNr());
 	}
 
 	@Override
@@ -254,6 +268,7 @@ public class OssFilesInput extends BaseStep implements StepInterface {
 				data.bucket = environmentSubstitute(meta.getBucket());
 				data.fileName = environmentSubstitute(meta.getFileName());
 				data.separator = environmentSubstitute(meta.getSeparator());
+				data.lowerLimitMarker = environmentSubstitute(meta.getLowerLimitMarker());
 				return true;
 			} catch (Exception e) {
 				logError("An error occurred intialising this step: " + e.getMessage());
