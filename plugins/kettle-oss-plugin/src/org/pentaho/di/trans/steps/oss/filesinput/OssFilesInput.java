@@ -52,7 +52,7 @@ import com.google.common.collect.Lists;
  */
 public class OssFilesInput extends BaseStep implements StepInterface {
 
-	private final String FIELD_FILE_NAME = "file_name";
+	public static final String FIELD_FILE_NAME = "file_name";
 
 	private static Class<?> PKG = OssFilesInputMeta.class; // for i18n purposes
 
@@ -73,12 +73,12 @@ public class OssFilesInput extends BaseStep implements StepInterface {
 
 		if (first) { // we just got started
 			first = false;
-
-			// 追加一列-文件名 begin
-			List<TextFileInputField> fields = Lists.newArrayList(meta.getInputFields());
-			fields.add(genFileNameField());
-			meta.setInputFields(fields.toArray(new TextFileInputField[fields.size()]));
-			// 追加一列-文件名 end
+//			现在让界面生成
+//			// 追加一列-文件名 begin
+//			List<TextFileInputField> fields = Lists.newArrayList(meta.getInputFields());
+//			fields.add(genFileNameField());
+//			meta.setInputFields(fields.toArray(new TextFileInputField[fields.size()]));
+//			// 追加一列-文件名 end
 
 			data.outputRowMeta = new RowMeta();
 			meta.getFields(data.outputRowMeta, getStepname(), null, null, this, repository, metaStore);

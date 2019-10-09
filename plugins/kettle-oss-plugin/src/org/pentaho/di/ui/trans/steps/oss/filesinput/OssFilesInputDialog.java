@@ -1028,6 +1028,11 @@ public class OssFilesInputDialog extends BaseStepDialog implements StepDialogInt
 					item.setText(2, "String"); // The default type is String...
 				}
 			}
+			// 加file_name
+			TableItem item = new TableItem(table, SWT.NONE);
+			item.setText(1, OssFilesInput.FIELD_FILE_NAME);
+			item.setText(2, "String");
+
 			wFields.setRowNums();
 			wFields.optWidth(true);
 
