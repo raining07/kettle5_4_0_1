@@ -140,7 +140,7 @@ public class BookMark implements Closeable {
 							// raise an error this is not a DOS file
 							// so we have pulled a character from the next line
 							throw new Exception(
-									"DOS format was specified but only a single line feed character was found, not 2");
+									"期望的格式是DOS文件,但发现换行符不符合,请检查文件格式");
 						}
 						addReadLine();
 						return line.toString();
@@ -183,11 +183,7 @@ public class BookMark implements Closeable {
 				break;
 			}
 		} catch (Exception e) {
-			if (line.length() == 0) {
-				throw e;
-			}
-			addReadLine();
-			return line.toString();
+			throw e;
 		}
 		if (line.length() > 0) {
 			addReadLine();
