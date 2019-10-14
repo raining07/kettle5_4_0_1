@@ -29,8 +29,6 @@ import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
 import org.pentaho.di.trans.steps.textfileinput.TextFileInputField;
 
-import com.google.common.collect.Lists;
-
 /**
  * OSS多文件输入<br/>
  * 1.oss文件位置<br/>
@@ -133,6 +131,7 @@ public class OssFilesInput extends BaseStep implements StepInterface {
 			}
 
 			// String[] strings = StringUtils.split(line, data.separator);
+			line += data.separator + data.bookMark.getCurrentBook();
 			String[] strings = line.split("\\" + data.separator);
 //			String line_ = "";
 //			for(String str: strings) {
@@ -141,11 +140,11 @@ public class OssFilesInput extends BaseStep implements StepInterface {
 //			log.logBasic(meta.getCharset());
 //			log.logBasic(line);
 //			log.logBasic(line_);
-			// 追加一列-文件名 begin
-			List<String> list = Lists.newArrayList(strings);
-			list.add(data.bookMark.getCurrentBook());
-			strings = list.toArray(new String[list.size()]);
-			// 追加一列-文件名 end
+//			// 追加一列-文件名 begin
+//			List<String> list = Lists.newArrayList(strings);
+//			list.add(data.bookMark.getCurrentBook());
+//			strings = list.toArray(new String[list.size()]);
+//			// 追加一列-文件名 end
 
 			Object[] r = getRows(data.outputRowMeta, data.convertRowMeta, meta.getInputFields(), strings);
 			putRow(data.outputRowMeta, r);
