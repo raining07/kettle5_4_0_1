@@ -25,8 +25,7 @@ import org.w3c.dom.Node;
  * @author xuejian
  *
  */
-// 暂未开发
-// @Step(id = "OssDownloader", image = "oss-downloader.png", i18nPackageName = "org.pentaho.di.trans.steps.oss.downloader", name = "OssDownloader.Name", description = "OssDownloader.TooltipDesc", categoryDescription = "i18n:org.pentaho.di.trans.steps.oss.downloader:OssDownloader.Step.Category")
+@Step(id = "OssDownloader", image = "oss-downloader.png", i18nPackageName = "org.pentaho.di.trans.steps.oss.downloader", name = "OssDownloader.Name", description = "OssDownloader.TooltipDesc", categoryDescription = "i18n:org.pentaho.di.trans.steps.oss.downloader:OssDownloader.Step.Category")
 public class OssDownloaderMeta extends BaseStepMeta implements StepMetaInterface {
 
 	/*
@@ -36,10 +35,11 @@ public class OssDownloaderMeta extends BaseStepMeta implements StepMetaInterface
 	private final String TAG_ACCESS_KEY = "access_key";
 	private final String TAG_SECURE_KEY = "secure_key";
 	private final String TAG_BUCKET = "bucket";
-	private final String TAG_TARGET_FILE_NAME = "target_file_name";
-	private final String TAG_SOURCE_FILE_PATH = "source_file_path";
-	private final String TAG_SOURCE_FILE_NAME = "source_file_name";
-	private final String TAG_COVER_FILE = "cover_file";
+	private final String TAG_FILENAME_AS_PREVIOUS = "filenameAsPrevious";
+	private final String TAG_FILENAME = "fileName";
+	private final String TAG_LOWER_LIMIT_MARKER = "lowerLimitMarker";
+	private final String TAG_DELETE_OSS = "deleteOss";
+	private final String TAG_DOWNLOAD_DIR = "downloadDir";
 
 	/*
 	 * Form fields
@@ -48,10 +48,11 @@ public class OssDownloaderMeta extends BaseStepMeta implements StepMetaInterface
 	private String accessKey;
 	private String secureKey;
 	private String bucket;
-	private String targetFileName;
-	private String sourceFilePath;
-	private String sourceFileName;
-	private boolean coverFile;
+	private boolean filenameAsPrevious; // 文件名是否作为前缀
+	private String fileName; // 文件名
+	private String lowerLimitMarker; // 文件名最小匹配标记
+	private String downloadDir; // 下载目录
+	private boolean deleteOss; // 下载之后是否删除OSS文件
 
 	public String getEndpoint() {
 		return endpoint;
@@ -85,36 +86,44 @@ public class OssDownloaderMeta extends BaseStepMeta implements StepMetaInterface
 		this.bucket = bucket;
 	}
 
-	public String getTargetFileName() {
-		return targetFileName;
+	public boolean isFilenameAsPrevious() {
+		return filenameAsPrevious;
 	}
 
-	public void setTargetFileName(String targetFileName) {
-		this.targetFileName = targetFileName;
+	public void setFilenameAsPrevious(boolean filenameAsPrevious) {
+		this.filenameAsPrevious = filenameAsPrevious;
 	}
 
-	public String getSourceFilePath() {
-		return sourceFilePath;
+	public String getFileName() {
+		return fileName;
 	}
 
-	public void setSourceFilePath(String sourceFilePath) {
-		this.sourceFilePath = sourceFilePath;
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
 	}
 
-	public String getSourceFileName() {
-		return sourceFileName;
+	public String getLowerLimitMarker() {
+		return lowerLimitMarker;
 	}
 
-	public void setSourceFileName(String sourceFileName) {
-		this.sourceFileName = sourceFileName;
+	public void setLowerLimitMarker(String lowerLimitMarker) {
+		this.lowerLimitMarker = lowerLimitMarker;
 	}
 
-	public boolean isCoverFile() {
-		return coverFile;
+	public String getDownloadDir() {
+		return downloadDir;
 	}
 
-	public void setCoverFile(boolean coverFile) {
-		this.coverFile = coverFile;
+	public void setDownloadDir(String downloadDir) {
+		this.downloadDir = downloadDir;
+	}
+
+	public boolean isDeleteOss() {
+		return deleteOss;
+	}
+
+	public void setDeleteOss(boolean deleteOss) {
+		this.deleteOss = deleteOss;
 	}
 
 	public OssDownloaderMeta() {
@@ -128,10 +137,11 @@ public class OssDownloaderMeta extends BaseStepMeta implements StepMetaInterface
 		accessKey = "";
 		secureKey = "";
 		bucket = "";
-		targetFileName = "";
-		sourceFilePath = "";
-		sourceFileName = "";
-		coverFile = true;
+		filenameAsPrevious = true;
+		fileName = "";
+		lowerLimitMarker = "";
+		deleteOss = false;
+		downloadDir = "";
 	}
 
 	/**
@@ -166,10 +176,11 @@ public class OssDownloaderMeta extends BaseStepMeta implements StepMetaInterface
 			accessKey = XMLHandler.getTagValue(stepnode, TAG_ACCESS_KEY);
 			secureKey = XMLHandler.getTagValue(stepnode, TAG_SECURE_KEY);
 			bucket = XMLHandler.getTagValue(stepnode, TAG_BUCKET);
-			targetFileName = XMLHandler.getTagValue(stepnode, TAG_TARGET_FILE_NAME);
-			sourceFilePath = XMLHandler.getTagValue(stepnode, TAG_SOURCE_FILE_PATH);
-			sourceFileName = XMLHandler.getTagValue(stepnode, TAG_SOURCE_FILE_NAME);
-			coverFile = "Y".equalsIgnoreCase(XMLHandler.getTagValue(stepnode, TAG_COVER_FILE));
+			filenameAsPrevious = "Y".equalsIgnoreCase(XMLHandler.getTagValue(stepnode, TAG_FILENAME_AS_PREVIOUS));
+			fileName = XMLHandler.getTagValue(stepnode, TAG_FILENAME);
+			lowerLimitMarker = XMLHandler.getTagValue(stepnode, TAG_LOWER_LIMIT_MARKER);
+			downloadDir = XMLHandler.getTagValue(stepnode, TAG_DOWNLOAD_DIR);
+			deleteOss = "Y".equalsIgnoreCase(XMLHandler.getTagValue(stepnode, TAG_DELETE_OSS));
 		} catch (Exception e) {
 			throw new KettleXMLException("Unable to load step info from XML", e);
 		}
@@ -182,10 +193,11 @@ public class OssDownloaderMeta extends BaseStepMeta implements StepMetaInterface
 		retval.append("    ").append(XMLHandler.addTagValue(TAG_ACCESS_KEY, accessKey));
 		retval.append("    ").append(XMLHandler.addTagValue(TAG_SECURE_KEY, secureKey));
 		retval.append("    ").append(XMLHandler.addTagValue(TAG_BUCKET, bucket));
-		retval.append("    ").append(XMLHandler.addTagValue(TAG_TARGET_FILE_NAME, targetFileName));
-		retval.append("    ").append(XMLHandler.addTagValue(TAG_SOURCE_FILE_PATH, sourceFilePath));
-		retval.append("    ").append(XMLHandler.addTagValue(TAG_SOURCE_FILE_NAME, sourceFileName));
-		retval.append("    ").append(XMLHandler.addTagValue(TAG_COVER_FILE, coverFile));
+		retval.append("    ").append(XMLHandler.addTagValue(TAG_FILENAME_AS_PREVIOUS, filenameAsPrevious));
+		retval.append("    ").append(XMLHandler.addTagValue(TAG_FILENAME, fileName));
+		retval.append("    ").append(XMLHandler.addTagValue(TAG_LOWER_LIMIT_MARKER, lowerLimitMarker));
+		retval.append("    ").append(XMLHandler.addTagValue(TAG_DOWNLOAD_DIR, downloadDir));
+		retval.append("    ").append(XMLHandler.addTagValue(TAG_DELETE_OSS, deleteOss));
 		return retval.toString();
 	}
 
@@ -201,10 +213,11 @@ public class OssDownloaderMeta extends BaseStepMeta implements StepMetaInterface
 			accessKey = rep.getStepAttributeString(id_step, TAG_ACCESS_KEY);
 			secureKey = rep.getStepAttributeString(id_step, TAG_SECURE_KEY);
 			bucket = rep.getStepAttributeString(id_step, TAG_BUCKET);
-			targetFileName = rep.getStepAttributeString(id_step, TAG_TARGET_FILE_NAME);
-			sourceFilePath = rep.getStepAttributeString(id_step, TAG_SOURCE_FILE_PATH);
-			sourceFileName = rep.getStepAttributeString(id_step, TAG_SOURCE_FILE_NAME);
-			coverFile = rep.getStepAttributeBoolean(id_step, TAG_COVER_FILE);
+			filenameAsPrevious = rep.getStepAttributeBoolean(id_step, TAG_FILENAME_AS_PREVIOUS);
+			fileName = rep.getStepAttributeString(id_step, TAG_FILENAME);
+			lowerLimitMarker = rep.getStepAttributeString(id_step, TAG_LOWER_LIMIT_MARKER);
+			downloadDir = rep.getStepAttributeString(id_step, TAG_DOWNLOAD_DIR);
+			deleteOss = rep.getStepAttributeBoolean(id_step, TAG_DELETE_OSS);
 		} catch (Exception e) {
 			throw new KettleException("Unexpected error reading step information from the repository", e);
 		}
@@ -221,10 +234,11 @@ public class OssDownloaderMeta extends BaseStepMeta implements StepMetaInterface
 			rep.saveStepAttribute(id_transformation, id_step, TAG_ACCESS_KEY, accessKey);
 			rep.saveStepAttribute(id_transformation, id_step, TAG_SECURE_KEY, secureKey);
 			rep.saveStepAttribute(id_transformation, id_step, TAG_BUCKET, bucket);
-			rep.saveStepAttribute(id_transformation, id_step, TAG_TARGET_FILE_NAME, targetFileName);
-			rep.saveStepAttribute(id_transformation, id_step, TAG_SOURCE_FILE_PATH, sourceFilePath);
-			rep.saveStepAttribute(id_transformation, id_step, TAG_SOURCE_FILE_NAME, sourceFileName);
-			rep.saveStepAttribute(id_transformation, id_step, TAG_COVER_FILE, coverFile);
+			rep.saveStepAttribute(id_transformation, id_step, TAG_FILENAME_AS_PREVIOUS, filenameAsPrevious);
+			rep.saveStepAttribute(id_transformation, id_step, TAG_FILENAME, fileName);
+			rep.saveStepAttribute(id_transformation, id_step, TAG_LOWER_LIMIT_MARKER, lowerLimitMarker);
+			rep.saveStepAttribute(id_transformation, id_step, TAG_DOWNLOAD_DIR, downloadDir);
+			rep.saveStepAttribute(id_transformation, id_step, TAG_DELETE_OSS, deleteOss);
 		} catch (Exception e) {
 			throw new KettleException("Unable to save step information to the repository for id_step=" + id_step, e);
 		}

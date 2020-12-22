@@ -1,12 +1,10 @@
 package org.pentaho.di.trans.steps.oss.downloader;
 
-import java.io.File;
-
-import org.pentaho.di.core.Const;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.oss.OssConfig;
 import org.pentaho.di.core.oss.OssWorker;
-import org.pentaho.di.i18n.BaseMessages;
+import org.pentaho.di.core.row.RowMeta;
+import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStep;
@@ -32,7 +30,6 @@ public class OssDownloader extends BaseStep implements StepInterface {
 	public OssDownloader(StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta,
 			Trans trans) {
 		super(stepMeta, stepDataInterface, copyNr, transMeta, trans);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
@@ -54,46 +51,18 @@ public class OssDownloader extends BaseStep implements StepInterface {
 			// get the RowMeta
 			data.previousRowMeta = getInputRowMeta().clone();
 
-			// Source file path
-			if (!Const.isEmpty(meta.getSourceFilePath())) {
-				// cache the position of the reply to field
-				if (data.indexOfSourceFilePath < 0) {
-					String realSourceFilePath = meta.getSourceFilePath();
-					data.indexOfSourceFilePath = data.previousRowMeta.indexOfValue(realSourceFilePath);
-					if (data.indexOfSourceFilePath < 0) {
-						throw new KettleException(BaseMessages.getString(PKG,
-								"OssDownloader.Exception.CouldnotFindSourceFilePathField", realSourceFilePath));
-					}
-				}
-			}
-
-			// Source file name
-			if (!Const.isEmpty(meta.getSourceFileName())) {
-				// cache the position of the reply to field
-				if (data.indexOfSourceFileName < 0) {
-					String realSourceFileName = meta.getSourceFileName();
-					data.indexOfSourceFileName = data.previousRowMeta.indexOfValue(realSourceFileName);
-					if (data.indexOfSourceFileName < 0) {
-						throw new KettleException(BaseMessages.getString(PKG,
-								"OssDownloader.Exception.CouldnotFindSourceFileNameField", realSourceFileName));
-					}
-				}
-			}
+			data.outputRowMeta = new RowMeta();
+			meta.getFields(data.outputRowMeta, getStepname(), null, null, this, repository, metaStore);
+			data.convertRowMeta = data.outputRowMeta.cloneToType(ValueMetaInterface.TYPE_STRING);
 		}
 
 		try {
 			// Source file path
-			String sourceFilePath = null;
-			if (data.indexOfSourceFilePath > -1) {
-				sourceFilePath = data.previousRowMeta.getString(r, data.indexOfSourceFilePath);
-			}
-			// Source file name
-			String sourceFileName = null;
-			if (data.indexOfSourceFileName > -1) {
-				sourceFileName = data.previousRowMeta.getString(r, data.indexOfSourceFileName);
-			}
-			doUpload(data.endpoint, data.accessKey, data.secureKey, data.bucket, meta.isCoverFile(),
-					data.targetFileName, sourceFilePath, sourceFileName);
+			download(data.endpoint, data.accessKey, data.secureKey, data.bucket, meta.isFilenameAsPrevious(),
+					data.fileName, data.lowerLimitMarker, meta.isDeleteOss(), data.downloadDir);
+
+			// 数据需要传递到下一个组件
+			putRow(data.outputRowMeta, r);
 		} catch (Exception e) {
 			logError("Because of an error, this step can't continue: ", e);
 			setErrors(1);
@@ -104,13 +73,14 @@ public class OssDownloader extends BaseStep implements StepInterface {
 		return true;
 	}
 
-	private void doUpload(String endpoint, String accessKey, String secureKey, String bucket, boolean coverFile,
-			String targetFileName, String sourceFilePath, String sourceFileName) throws Exception {
+	private void download(String endpoint, String accessKey, String secureKey, String bucket,
+			boolean filenameAsPrevious, String fileName, String lowerLimitMarker, boolean deleteOss,
+			String downloadDir) throws Exception {
 		OssWorker ossWorker = null;
 		try {
 			OssConfig ossConfig = new OssConfig(endpoint, accessKey, secureKey, bucket);
 			ossWorker = new OssWorker(ossConfig);
-			ossWorker.doUpload(coverFile, sourceFilePath + File.separator + sourceFileName, targetFileName);
+			ossWorker.doDownload(filenameAsPrevious, fileName, lowerLimitMarker, 1000, downloadDir, deleteOss);
 		} catch (Exception e) {
 			throw e;
 		} finally {
@@ -131,7 +101,9 @@ public class OssDownloader extends BaseStep implements StepInterface {
 				data.accessKey = environmentSubstitute(meta.getAccessKey());
 				data.secureKey = environmentSubstitute(meta.getSecureKey());
 				data.bucket = environmentSubstitute(meta.getBucket());
-				data.targetFileName = environmentSubstitute(meta.getTargetFileName());
+				data.fileName = environmentSubstitute(meta.getFileName());
+				data.lowerLimitMarker = environmentSubstitute(meta.getLowerLimitMarker());
+				data.downloadDir = environmentSubstitute(meta.getDownloadDir());
 				return true;
 			} catch (Exception e) {
 				logError("An error occurred intialising this step: " + e.getMessage());

@@ -16,10 +16,14 @@
     <artifact name="${ivy.artifact.id}" m:classifier="sources" type="source" ext="jar" conf="source"/>
     <artifact name="${ivy.artifact.id}" m:classifier="sources" type="source" ext="zip" conf="source"/>
   </publications>
-
+  
   <dependencies defaultconf="dev->default">
+  	<dependency org="org.antlr"                        name="antlr-complete"       rev="3.5.2"  		 transitive="false"/>
     <dependency org="pentaho-kettle" name="kettle-core" rev="${dependency.kettle.revision}" changing="true"/>
-    <dependency org="pentaho-kettle" name="kettle-engine" rev="${dependency.kettle.revision}" changing="true"/>
+    <dependency org="pentaho-kettle" name="kettle-engine" rev="${dependency.kettle.revision}" changing="true">
+    	<exclude org="org.antlr" module="antlr"/>
+    </dependency>
+    
     <dependency org="pentaho-kettle" name="kettle-ui-swt" rev="${dependency.kettle.revision}" changing="true"/>
       
     <!-- SWT it required to compile any version of any architecture will work -->
@@ -33,7 +37,7 @@
     <dependency org="commons-logging" name="commons-logging" rev="1.2" conf="default->default" transitive="false"/>
     <dependency org="commons-codec" name="commons-codec" rev="1.9" conf="default->default" transitive="false"/>
     <dependency org="org.jdom" name="jdom" rev="1.1" conf="default->default" transitive="false"/>
-    
+    <dependency org="org.apache.commons" name="commons-lang3" rev="3.9" conf="default->default" transitive="false"/>
     <!-- 
     <dependency org="commons-codec"       name="commons-codec"       rev="1.5"      conf="default->default"        transitive="false"/>
     <dependency org="commons-logging"     name="commons-logging"     rev="1.1.1"    conf="default->default"        transitive="false"/>

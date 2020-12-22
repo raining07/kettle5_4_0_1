@@ -72,34 +72,42 @@ public class OssDownloaderDialog extends BaseStepDialog implements StepDialogInt
 	private FormData fdlBucket, fdBucket;
 
 	/*
-	 * Cover file
+	 * FilenameAsPrevious
 	 */
-	private Label wlCoverFile;
-	private Button wCoverFile;
-	private FormData fdlCoverFile, fdCoverFile;
-
-	/*
-	 * TargetFileName
-	 */
-	private Label wlTargetFileName;
-	private TextVar wTargetFileName;
-	private FormData fdlTargetFileName, fdTargetFileName;
+	private Label wlFilenameAsPrevious;
+	private Button wFilenameAsPrevious;
+	private FormData fdlFilenameAsPrevious, fdFilenameAsPrevious;
 
 	/*
 	 * SourceFilePath
 	 */
-	private Label wlSourceFilePath;
-	private FormData fdSourceFilePath;
-	private CCombo wSourceFilePath;
-	private FormData fdlSourceFilePath;
+	private Label wlFileName;
+	private FormData fdFileName;
+	private TextVar wFileName;
+	private FormData fdlFileName;
 
 	/*
-	 * SourceFileName
+	 * LowerLimitMarker
 	 */
-	private Label wlSourceFileName;
-	private FormData fdSourceFileName;
-	private CCombo wSourceFileName;
-	private FormData fdlSourceFileName;
+	private Label wlLowerLimitMarker;
+	private FormData fdLowerLimitMarker;
+	private TextVar wLowerLimitMarker;
+	private FormData fdlLowerLimitMarker;
+
+	/*
+	 * downloadDir
+	 */
+	private Label wlDownloadDir;
+	private FormData fdDownloadDir;
+	private TextVar wDownloadDir;
+	private FormData fdlDownloadDir;
+
+	/*
+	 * DeleteOss
+	 */
+	private Label wlDeleteOss;
+	private Button wDeleteOss;
+	private FormData fdlDeleteOss, fdDeleteOss;
 
 	private boolean getpreviousFields = false;
 
@@ -226,104 +234,93 @@ public class OssDownloaderDialog extends BaseStepDialog implements StepDialogInt
 		fdBucket.right = new FormAttachment(100, 0);
 		wBucket.setLayoutData(fdBucket);
 
-		// Cover file
-		wlCoverFile = new Label(shell, SWT.RIGHT);
-		wlCoverFile.setText(msgProp("OssDownloader.CoverFile.Label"));
-		props.setLook(wlCoverFile);
-		fdlCoverFile = new FormData();
-		fdlCoverFile.left = new FormAttachment(0, 0);
-		fdlCoverFile.top = new FormAttachment(wBucket, margin);
-		fdlCoverFile.right = new FormAttachment(middle, -margin);
-		wlCoverFile.setLayoutData(fdlCoverFile);
-		wCoverFile = new Button(shell, SWT.CHECK);
-		props.setLook(wCoverFile);
-		fdCoverFile = new FormData();
-		fdCoverFile.left = new FormAttachment(middle, 0);
-		fdCoverFile.top = new FormAttachment(wBucket, margin);
-		fdCoverFile.right = new FormAttachment(100, 0);
-		wCoverFile.setLayoutData(fdCoverFile);
+		// FilenameAsPrevious
+		wlFilenameAsPrevious = new Label(shell, SWT.RIGHT);
+		wlFilenameAsPrevious.setText(msgProp("OssDownloader.FilenameAsPrevious.Label"));
+		props.setLook(wlFilenameAsPrevious);
+		fdlFilenameAsPrevious = new FormData();
+		fdlFilenameAsPrevious.left = new FormAttachment(0, 0);
+		fdlFilenameAsPrevious.top = new FormAttachment(wBucket, margin);
+		fdlFilenameAsPrevious.right = new FormAttachment(middle, -margin);
+		wlFilenameAsPrevious.setLayoutData(fdlFilenameAsPrevious);
+		wFilenameAsPrevious = new Button(shell, SWT.CHECK);
+		props.setLook(wFilenameAsPrevious);
+		fdFilenameAsPrevious = new FormData();
+		fdFilenameAsPrevious.left = new FormAttachment(middle, 0);
+		fdFilenameAsPrevious.top = new FormAttachment(wBucket, margin);
+		fdFilenameAsPrevious.right = new FormAttachment(100, 0);
+		wFilenameAsPrevious.setLayoutData(fdFilenameAsPrevious);
 
-		// Target file name ...
-		wlTargetFileName = new Label(shell, SWT.RIGHT);
-		wlTargetFileName.setText(msgProp("OssDownloader.TargetFileName.Label"));
-		props.setLook(wlTargetFileName);
-		fdlTargetFileName = new FormData();
-		fdlTargetFileName.left = new FormAttachment(0, 0);
-		fdlTargetFileName.right = new FormAttachment(middle, -margin);
-		fdlTargetFileName.top = new FormAttachment(wCoverFile, margin);
-		wlTargetFileName.setLayoutData(fdlTargetFileName);
-		wTargetFileName = new TextVar(transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
-		props.setLook(wTargetFileName);
-		wTargetFileName.addModifyListener(lsMod);
-		fdTargetFileName = new FormData();
-		fdTargetFileName.left = new FormAttachment(middle, 0);
-		fdTargetFileName.top = new FormAttachment(wCoverFile, margin);
-		fdTargetFileName.right = new FormAttachment(100, 0);
-		wTargetFileName.setLayoutData(fdTargetFileName);
+		// FileName ...
+		wlFileName = new Label(shell, SWT.RIGHT);
+		wlFileName.setText(msgProp("OssDownloader.FileName.Label"));
+		props.setLook(wlFileName);
+		fdlFileName = new FormData();
+		fdlFileName.left = new FormAttachment(0, 0);
+		fdlFileName.right = new FormAttachment(middle, -margin);
+		fdlFileName.top = new FormAttachment(wFilenameAsPrevious, margin);
+		wlFileName.setLayoutData(fdlFileName);
+		wFileName = new TextVar(transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		props.setLook(wFileName);
+		wFileName.addModifyListener(lsMod);
+		fdFileName = new FormData();
+		fdFileName.left = new FormAttachment(middle, 0);
+		fdFileName.top = new FormAttachment(wFilenameAsPrevious, margin);
+		fdFileName.right = new FormAttachment(100, 0);
+		wFileName.setLayoutData(fdFileName);
 
-		// Source file path ...
-		wlSourceFilePath = new Label(shell, SWT.RIGHT);
-		wlSourceFilePath.setText(BaseMessages.getString(PKG, "OssDownloader.SourceFilePath.Label"));
-		props.setLook(wlSourceFilePath);
-		fdlSourceFilePath = new FormData();
-		fdlSourceFilePath.left = new FormAttachment(0, -margin);
-		fdlSourceFilePath.top = new FormAttachment(wTargetFileName, 2 * margin);
-		fdlSourceFilePath.right = new FormAttachment(middle, -2 * margin);
-		wlSourceFilePath.setLayoutData(fdlSourceFilePath);
+		// LowerLimitMarker ...
+		wlLowerLimitMarker = new Label(shell, SWT.RIGHT);
+		wlLowerLimitMarker.setText(msgProp("OssDownloader.LowerLimitMarker.Label"));
+		props.setLook(wlLowerLimitMarker);
+		fdlLowerLimitMarker = new FormData();
+		fdlLowerLimitMarker.left = new FormAttachment(0, 0);
+		fdlLowerLimitMarker.right = new FormAttachment(middle, -margin);
+		fdlLowerLimitMarker.top = new FormAttachment(wFileName, margin);
+		wlLowerLimitMarker.setLayoutData(fdlLowerLimitMarker);
+		wLowerLimitMarker = new TextVar(transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		props.setLook(wLowerLimitMarker);
+		wLowerLimitMarker.addModifyListener(lsMod);
+		fdLowerLimitMarker = new FormData();
+		fdLowerLimitMarker.left = new FormAttachment(middle, 0);
+		fdLowerLimitMarker.top = new FormAttachment(wFileName, margin);
+		fdLowerLimitMarker.right = new FormAttachment(100, 0);
+		wLowerLimitMarker.setLayoutData(fdLowerLimitMarker);
 
-		wSourceFilePath = new CCombo(shell, SWT.BORDER | SWT.READ_ONLY);
-		wSourceFilePath.setEditable(true);
-		props.setLook(wSourceFilePath);
-		wSourceFilePath.addModifyListener(lsMod);
-		fdSourceFilePath = new FormData();
-		fdSourceFilePath.left = new FormAttachment(middle, -margin);
-		fdSourceFilePath.top = new FormAttachment(wTargetFileName, 2 * margin);
-		fdSourceFilePath.right = new FormAttachment(100, -margin);
-		wSourceFilePath.setLayoutData(fdSourceFilePath);
-		wSourceFilePath.addFocusListener(new FocusListener() {
-			public void focusLost(org.eclipse.swt.events.FocusEvent e) {
-			}
+		// DownloadDir ...
+		wlDownloadDir = new Label(shell, SWT.RIGHT);
+		wlDownloadDir.setText(msgProp("OssDownloader.DownloadDir.Label"));
+		props.setLook(wlDownloadDir);
+		fdlDownloadDir = new FormData();
+		fdlDownloadDir.left = new FormAttachment(0, 0);
+		fdlDownloadDir.right = new FormAttachment(middle, -margin);
+		fdlDownloadDir.top = new FormAttachment(wLowerLimitMarker, margin);
+		wlDownloadDir.setLayoutData(fdlDownloadDir);
+		wDownloadDir = new TextVar(transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		props.setLook(wDownloadDir);
+		wDownloadDir.addModifyListener(lsMod);
+		fdDownloadDir = new FormData();
+		fdDownloadDir.left = new FormAttachment(middle, 0);
+		fdDownloadDir.top = new FormAttachment(wLowerLimitMarker, margin);
+		fdDownloadDir.right = new FormAttachment(100, 0);
+		wDownloadDir.setLayoutData(fdDownloadDir);
 
-			public void focusGained(org.eclipse.swt.events.FocusEvent e) {
-				Cursor busy = new Cursor(shell.getDisplay(), SWT.CURSOR_WAIT);
-				shell.setCursor(busy);
-				getPreviousFields();
-				shell.setCursor(null);
-				busy.dispose();
-			}
-		});
-
-		// Source file name ...
-		wlSourceFileName = new Label(shell, SWT.RIGHT);
-		wlSourceFileName.setText(BaseMessages.getString(PKG, "OssDownloader.SourceFileName.Label"));
-		props.setLook(wlSourceFileName);
-		fdlSourceFileName = new FormData();
-		fdlSourceFileName.left = new FormAttachment(0, -margin);
-		fdlSourceFileName.top = new FormAttachment(wSourceFilePath, 2 * margin);
-		fdlSourceFileName.right = new FormAttachment(middle, -2 * margin);
-		wlSourceFileName.setLayoutData(fdlSourceFileName);
-
-		wSourceFileName = new CCombo(shell, SWT.BORDER | SWT.READ_ONLY);
-		wSourceFileName.setEditable(true);
-		props.setLook(wSourceFileName);
-		wSourceFileName.addModifyListener(lsMod);
-		fdSourceFileName = new FormData();
-		fdSourceFileName.left = new FormAttachment(middle, -margin);
-		fdSourceFileName.top = new FormAttachment(wSourceFilePath, 2 * margin);
-		fdSourceFileName.right = new FormAttachment(100, -margin);
-		wSourceFileName.setLayoutData(fdSourceFileName);
-		wSourceFileName.addFocusListener(new FocusListener() {
-			public void focusLost(org.eclipse.swt.events.FocusEvent e) {
-			}
-
-			public void focusGained(org.eclipse.swt.events.FocusEvent e) {
-				Cursor busy = new Cursor(shell.getDisplay(), SWT.CURSOR_WAIT);
-				shell.setCursor(busy);
-				getPreviousFields();
-				shell.setCursor(null);
-				busy.dispose();
-			}
-		});
+		// DeleteOss
+		wlDeleteOss = new Label(shell, SWT.RIGHT);
+		wlDeleteOss.setText(msgProp("OssDownloader.DeleteOss.Label"));
+		props.setLook(wlDeleteOss);
+		fdlDeleteOss = new FormData();
+		fdlDeleteOss.left = new FormAttachment(0, 0);
+		fdlDeleteOss.top = new FormAttachment(wDownloadDir, margin);
+		fdlDeleteOss.right = new FormAttachment(middle, -margin);
+		wlDeleteOss.setLayoutData(fdlDeleteOss);
+		wDeleteOss = new Button(shell, SWT.CHECK);
+		props.setLook(wDeleteOss);
+		fdDeleteOss = new FormData();
+		fdDeleteOss.left = new FormAttachment(middle, 0);
+		fdDeleteOss.top = new FormAttachment(wDownloadDir, margin);
+		fdDeleteOss.right = new FormAttachment(100, 0);
+		wDeleteOss.setLayoutData(fdDeleteOss);
 
 		// OK and cancel buttons ...
 		wOK = new Button(shell, SWT.PUSH);
@@ -331,7 +328,7 @@ public class OssDownloaderDialog extends BaseStepDialog implements StepDialogInt
 		wCancel = new Button(shell, SWT.PUSH);
 		wCancel.setText(BaseMessages.getString(PKG, "System.Button.Cancel"));
 
-		BaseStepDialog.positionBottomButtons(shell, new Button[] { wOK, wCancel }, margin, wSourceFileName);
+		BaseStepDialog.positionBottomButtons(shell, new Button[] { wOK, wCancel }, margin, wDeleteOss);
 
 		// Add listeners
 		lsCancel = new Listener() {
@@ -359,10 +356,11 @@ public class OssDownloaderDialog extends BaseStepDialog implements StepDialogInt
 		wAccessKey.addSelectionListener(lsDef);
 		wSecureKey.addSelectionListener(lsDef);
 		wBucket.addSelectionListener(lsDef);
-		wTargetFileName.addSelectionListener(lsDef);
-		wSourceFilePath.addSelectionListener(lsDef);
-		wSourceFileName.addSelectionListener(lsDef);
-		wCoverFile.addSelectionListener(lsDef);
+		wFilenameAsPrevious.addSelectionListener(lsDef);
+		wFileName.addSelectionListener(lsDef);
+		wLowerLimitMarker.addSelectionListener(lsDef);
+		wDownloadDir.addSelectionListener(lsDef);
+		wDeleteOss.addSelectionListener(lsDef);
 
 		// Detect X or ALT-F4 or something that kills this window...
 		shell.addShellListener(new ShellAdapter() {
@@ -385,43 +383,35 @@ public class OssDownloaderDialog extends BaseStepDialog implements StepDialogInt
 		return stepname;
 	}
 
+	/**
+	 * 获取前一个步骤的字段
+	 */
 	protected void getPreviousFields() {
-		if (getpreviousFields) {
-			return;
-		}
-		getpreviousFields = true;
-		try {
-			// File path ...
-			String sourceFilePath = null;
-			if (wSourceFilePath != null) {
-				sourceFilePath = wSourceFilePath.getText();
-			}
-			wSourceFilePath.removeAll();
-
-			// File name ...
-			String siurceFileName = null;
-			if (wSourceFileName != null) {
-				siurceFileName = wSourceFileName.getText();
-			}
-			wSourceFileName.removeAll();
-
-			RowMetaInterface r = transMeta.getPrevStepFields(stepname);
-			if (r != null) {
-				String[] fieldnames = r.getFieldNames();
-				wSourceFilePath.setItems(fieldnames);
-				wSourceFileName.setItems(fieldnames);
-			}
-
-			if (sourceFilePath != null) {
-				wSourceFilePath.setText(sourceFilePath);
-			}
-			if (siurceFileName != null) {
-				wSourceFileName.setText(siurceFileName);
-			}
-		} catch (KettleException ke) {
-			new ErrorDialog(shell, BaseMessages.getString(PKG, "OssDownloaderDialog.FailedToGetFields.DialogTitle"),
-					BaseMessages.getString(PKG, "OssDownloaderDialog.FailedToGetFields.DialogMessage"), ke);
-		}
+//		if (getpreviousFields) {
+//			return;
+//		}
+//		getpreviousFields = true;
+//		try {
+//			// File path ...
+//			String sourceFilePath = null;
+//			if (wSourceFilePath != null) {
+//				sourceFilePath = wSourceFilePath.getText();
+//			}
+//			wSourceFilePath.removeAll();
+//
+//			RowMetaInterface r = transMeta.getPrevStepFields(stepname);
+//			if (r != null) {
+//				String[] fieldnames = r.getFieldNames();
+//				wSourceFilePath.setItems(fieldnames);
+//			}
+//
+//			if (sourceFilePath != null) {
+//				wSourceFilePath.setText(sourceFilePath);
+//			}
+//		} catch (KettleException ke) {
+//			new ErrorDialog(shell, BaseMessages.getString(PKG, "OssDownloaderDialog.FailedToGetFields.DialogTitle"),
+//					BaseMessages.getString(PKG, "OssDownloaderDialog.FailedToGetFields.DialogMessage"), ke);
+//		}
 	}
 
 	private String msgProp(String propKey) {
@@ -434,10 +424,11 @@ public class OssDownloaderDialog extends BaseStepDialog implements StepDialogInt
 		wAccessKey.setText(Const.NVL(input.getAccessKey(), ""));
 		wSecureKey.setText(Const.NVL(input.getSecureKey(), ""));
 		wBucket.setText(Const.NVL(input.getBucket(), ""));
-		wTargetFileName.setText(Const.NVL(input.getTargetFileName(), ""));
-		wSourceFilePath.setText(Const.NVL(input.getSourceFilePath(), ""));
-		wSourceFileName.setText(Const.NVL(input.getSourceFileName(), ""));
-		wCoverFile.setSelection(input.isCoverFile());
+		wFilenameAsPrevious.setSelection(input.isFilenameAsPrevious());
+		wFileName.setText(Const.NVL(input.getFileName(), ""));
+		wLowerLimitMarker.setText(Const.NVL(input.getLowerLimitMarker(), ""));
+		wDownloadDir.setText(Const.NVL(input.getDownloadDir(), ""));
+		wDeleteOss.setSelection(input.isDeleteOss());
 
 		wStepname.selectAll();
 		wStepname.setFocus();
@@ -467,9 +458,10 @@ public class OssDownloaderDialog extends BaseStepDialog implements StepDialogInt
 		meta.setAccessKey(wAccessKey.getText());
 		meta.setSecureKey(wSecureKey.getText());
 		meta.setBucket(wBucket.getText());
-		meta.setTargetFileName(wTargetFileName.getText());
-		meta.setSourceFilePath(wSourceFilePath.getText());
-		meta.setSourceFileName(wSourceFileName.getText());
-		meta.setCoverFile(wCoverFile.getSelection());
+		meta.setFilenameAsPrevious(wFilenameAsPrevious.getSelection());
+		meta.setFileName(wFileName.getText());
+		meta.setLowerLimitMarker(wLowerLimitMarker.getText());
+		meta.setDeleteOss(wDeleteOss.getSelection());
+		meta.setDownloadDir(wDownloadDir.getText());
 	}
 }
